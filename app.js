@@ -583,8 +583,13 @@ function navigateTo(page) {
   $$('.nav-item').forEach(n => n.classList.remove('active'));
   $(`nav-${page}`)?.classList.add('active');
 
+  // Show/hide + Anggaran button di topbar
+  const budgetPages = ['income','fixed','variable','loan','savings','investments'];
+  const addBudgetBtn = $('add-budget-btn');
+  if (addBudgetBtn) addBudgetBtn.style.display = budgetPages.includes(page) ? '' : 'none';
+
   const titles = {
-    dashboard: 'Dashboard', transactions: '📋 Transaksi',
+    home: '🏠 Panduan', dashboard: 'Dashboard', transactions: '📋 Transaksi',
     report: '📊 Laporan Bulanan', goals: '🎯 Savings Goals',
     split: '✂️ Split Calculator',
     income: '💼 Pemasukan', fixed: '🏠 Pengeluaran Tetap',
@@ -601,7 +606,8 @@ function navigateTo(page) {
 }
 
 function renderPage(page) {
-  if (page === 'dashboard')    renderDashboard();
+  if (page === 'home')         renderHomePage();
+  else if (page === 'dashboard')    renderDashboard();
   else if (CATEGORIES.find(c => c.key === page)) renderCategoryPage(page);
   else if (page === 'transactions') renderTransactionsPage();
   else if (page === 'report')  renderMonthlyReport();
@@ -684,6 +690,18 @@ function renderHealthScore() {
     : '<div class="health-tip">💡 Tambahkan data keuangan untuk tips personal</div>';
 }
 
+
+/* ══════════════════════════════════════════
+   HOME PAGE
+══════════════════════════════════════════ */
+function renderHomePage() {
+  const s = state.settings;
+  const namesEl = document.getElementById('home-couple-names');
+  if (namesEl && s.name1 && s.name2) {
+    namesEl.textContent = s.name1 + ' & ' + s.name2;
+  }
+}
+
 /* ══════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════ */
@@ -691,6 +709,9 @@ let donutChart = null, barChart = null;
 
 function renderDashboard() {
   const s = state.settings;
+  // Sync month picker
+  const picker = $('dash-month-picker');
+  if (picker && picker.value !== s.month) picker.value = s.month || '';
   $('dash-title').textContent = `Budget ${s.name1} & ${s.name2}`;
   $('dash-month-label').textContent = monthLabel(s.month);
 
@@ -749,7 +770,7 @@ function renderDonutChart() {
   donutChart = new Chart(ctx, {
     type: 'doughnut',
     data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: 'transparent', hoverOffset: 6 }] },
-    options: { cutout: '68%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)}` } } }, animation: { animateRotate: true, duration: 800 } }
+    options: { cutout: '68%', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)}` } } }, animation: { animateRotate: true, duration: 800 } }
   });
 }
 
@@ -1079,8 +1100,10 @@ function openEditGoal(id) {
   $('goal-modal-title').textContent = 'Edit Goal';
   $('goal-edit-id').value   = g.id;
   $('goal-name').value      = g.name;
-  $('goal-target').value    = g.target;
-  $('goal-saved').value     = g.saved;
+  $('goal-target').value    = g.target ? parseInt(g.target).toLocaleString('id-ID') : '';
+  $('goal-target').dataset.rawValue = String(g.target || 0);
+  $('goal-saved').value     = g.saved ? parseInt(g.saved).toLocaleString('id-ID') : '';
+  $('goal-saved').dataset.rawValue = String(g.saved || 0);
   $('goal-deadline').value  = g.deadline || '';
   $('goal-icon').value      = g.icon || '';
   $('goal-currency').textContent  = state.settings.currency;
@@ -1091,8 +1114,8 @@ window.openEditGoal = openEditGoal;
 
 $('goal-save').addEventListener('click', () => {
   const name     = $('goal-name').value.trim();
-  const target   = parseFloat($('goal-target').value) || 0;
-  const saved    = parseFloat($('goal-saved').value) || 0;
+  const target   = getRawValue($('goal-target'));
+  const saved    = getRawValue($('goal-saved'));
   const deadline = $('goal-deadline').value;
   const icon     = $('goal-icon').value.trim() || '🎯';
   const editId   = $('goal-edit-id').value;
@@ -1151,7 +1174,7 @@ $$('.preset-btn').forEach(btn => {
 
 $('calc-split-btn').addEventListener('click', () => {
   const desc   = $('split-desc').value.trim();
-  const total  = parseFloat($('split-amount').value) || 0;
+  const total  = getRawValue($('split-amount'));
   const ratio  = parseInt($('split-ratio').value);
   const s      = state.settings;
   if (total <= 0) { showToast('Masukkan jumlah yang valid', 'error'); return; }
@@ -1302,7 +1325,8 @@ function openEditBudgetItem(cat, idx) {
   $('bm-edit-index').value    = idx;
   $('bm-item-id').value       = item.id || '';
   $('bm-desc').value          = item.description;
-  $('bm-amount').value        = item.budget;
+  $('bm-amount').value        = item.budget ? parseInt(item.budget).toLocaleString('id-ID') : '';
+  $('bm-amount').dataset.rawValue = String(item.budget || 0);
   $('bm-assignee').value      = item.assignee;
   $('bm-currency-prefix').textContent = state.settings.currency;
   updateBudgetModalAssigneeNames();
@@ -1318,7 +1342,7 @@ function saveBudgetItem() {
   const idx  = parseInt($('bm-edit-index').value);
   const id   = $('bm-item-id').value || generateId();
   const desc = $('bm-desc').value.trim();
-  const amt  = parseFloat($('bm-amount').value) || 0;
+  const amt  = getRawValue($('bm-amount'));
   const asn  = $('bm-assignee').value;
   if (!desc) { showToast('Deskripsi tidak boleh kosong', 'error'); return; }
   const item = { id, description: desc, assignee: asn, budget: amt };
@@ -1386,7 +1410,7 @@ function saveTransaction() {
   const type = $('tx-type').value;
   const asn  = $('tx-assignee').value;
   const desc = $('tx-desc').value.trim();
-  const amt  = parseFloat($('tx-amount').value) || 0;
+  const amt  = getRawValue($('tx-amount'));
   if (!desc) { showToast('Deskripsi tidak boleh kosong', 'error'); return; }
   if (amt <= 0) { showToast('Jumlah harus lebih dari 0', 'error'); return; }
   const items = state.budgetItems[type] || [];
@@ -1537,6 +1561,10 @@ document.addEventListener('keydown', e => {
 function initApp() {
   updateSidebarCouple();
 
+  // Init number inputs dengan format titik otomatis
+  ['tx-amount', 'bm-amount', 'goal-target', 'goal-saved', 'split-amount'].forEach(initNumberInput);
+
+
   // Sidebar overlay
   sidebarOverlay = document.createElement('div');
   sidebarOverlay.className = 'sidebar-overlay';
@@ -1545,6 +1573,27 @@ function initApp() {
     $('sidebar').classList.remove('open');
     sidebarOverlay.classList.remove('show');
   });
+
+  // Month picker di dashboard
+  const dashMonthPicker = $('dash-month-picker');
+  if (dashMonthPicker) {
+    dashMonthPicker.value = state.settings.month || '';
+    dashMonthPicker.addEventListener('change', () => {
+      state.settings.month = dashMonthPicker.value;
+      $('sidebar-month-badge').textContent = monthLabel(state.settings.month);
+      $('dash-month-label').textContent = monthLabel(state.settings.month);
+      saveState();
+      renderDashboard();
+    });
+  }
+
+  // Tombol + Anggaran (context-aware: muncul hanya di halaman kategori)
+  const addBudgetBtn = $('add-budget-btn');
+  if (addBudgetBtn) {
+    addBudgetBtn.addEventListener('click', () => {
+      openAddBudgetItem(currentPage);
+    });
+  }
 
   // Nav
   $$('.nav-item').forEach(btn => btn.addEventListener('click', () => navigateTo(btn.dataset.page)));
@@ -1622,6 +1671,48 @@ function initApp() {
   }
   applyTheme(state.settings.theme);
   navigateTo('dashboard');
+}
+
+
+/* ══════════════════════════════════════════
+   NUMBER INPUT FORMATTING — titik otomatis
+══════════════════════════════════════════ */
+function formatNumberInput(input) {
+  // Ambil nilai, hapus semua non-digit
+  let raw = input.value.replace(/[^0-9]/g, '');
+  if (!raw) { input.value = ''; input.dataset.rawValue = '0'; return; }
+  // Simpan raw value di dataset
+  input.dataset.rawValue = raw;
+  // Format dengan titik tiap 3 digit
+  input.value = parseInt(raw, 10).toLocaleString('id-ID');
+}
+
+function getRawValue(input) {
+  // Ambil angka asli tanpa titik
+  return parseFloat((input.dataset.rawValue || input.value.replace(/[^0-9]/g, '')) || '0') || 0;
+}
+
+function initNumberInput(inputId) {
+  const el = $(inputId);
+  if (!el) return;
+  el.setAttribute('type', 'text');
+  el.setAttribute('inputmode', 'numeric');
+  el.setAttribute('autocomplete', 'off');
+  el.addEventListener('input', () => {
+    const pos = el.selectionStart;
+    const oldLen = el.value.length;
+    formatNumberInput(el);
+    // Adjust cursor position after formatting
+    const newLen = el.value.length;
+    el.selectionStart = el.selectionEnd = Math.max(0, pos + (newLen - oldLen));
+  });
+  el.addEventListener('focus', () => {
+    if (el.value === '0') el.value = '';
+  });
+  el.addEventListener('blur', () => {
+    formatNumberInput(el);
+    if (el.dataset.rawValue === '0' || !el.dataset.rawValue) el.value = '';
+  });
 }
 
 /* ══════════════════════════════════════════
