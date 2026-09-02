@@ -58,7 +58,7 @@ create policy "Users can read own couple_data" on public.couple_data
 /* ══════════════════════════════════════════
    INIT SUPABASE — diinisialisasi di DOMContentLoaded
 ══════════════════════════════════════════ */
-let supabase = null;
+let sbClient = null;
 
 /* ══════════════════════════════════════════
    CONSTANTS
@@ -168,7 +168,7 @@ function getActualForItem(cat, item) {
 ══════════════════════════════════════════ */
 async function loadFromSupabase() {
   if (!currentCouple) return;
-  const { data, error } = await supabase
+  const { data, error } = await sbClient
     .from('couple_data')
     .select('*')
     .eq('couple_id', currentCouple.id)
@@ -208,10 +208,10 @@ async function saveToSupabase() {
     updated_at: new Date().toISOString(),
   };
   if (coupleDataId) {
-    const { error } = await supabase.from('couple_data').update(payload).eq('id', coupleDataId);
+    const { error } = await sbClient.from('couple_data').update(payload).eq('id', coupleDataId);
     if (error) console.error('Save error:', error);
   } else {
-    const { data, error } = await supabase.from('couple_data').insert(payload).select().single();
+    const { data, error } = await sbClient.from('couple_data').insert(payload).select().single();
     if (error) { console.error('Insert error:', error); return; }
     coupleDataId = data.id;
   }
@@ -239,7 +239,7 @@ function deepMerge(target, source) {
 /* Realtime subscribe */
 function subscribeRealtime() {
   if (!currentCouple) return;
-  supabase
+  sbClient
     .channel('couple-data-' + currentCouple.id)
     .on('postgres_changes', {
       event: 'UPDATE',
@@ -364,14 +364,14 @@ async function checkInviteLink() {
 
     setJoinLoading(true);
     // Sign up partner
-    const { data: signupData, error } = await supabase.auth.signUp({ email: partnerEmail, password });
+    const { data: signupData, error } = await sbClient.auth.signUp({ email: partnerEmail, password });
     setJoinLoading(false);
 
     if (error) { showToast('Gagal daftar: ' + error.message, 'error'); return; }
     currentUser = signupData.user;
 
     // Load couple data
-    const { data: couple, error: coupleErr } = await supabase
+    const { data: couple, error: coupleErr } = await sbClient
       .from('couples').select('*').eq('id', coupleId).single();
     if (coupleErr || !couple) { showToast('Undangan tidak valid', 'error'); return; }
 
@@ -389,7 +389,7 @@ async function checkInviteLink() {
 }
 /* ── SESSION RESTORE ── */
 async function restoreSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sbClient.auth.getSession();
   if (!session) return false;
   currentUser = session.user;
   await afterLogin();
@@ -398,7 +398,7 @@ async function restoreSession() {
 async function afterLogin() {
   // Find couple where this user is email1 or email2
   const email = currentUser.email;
-  const { data: couples, error } = await supabase
+  const { data: couples, error } = await sbClient
     .from('couples')
     .select('*')
     .or(`email1.eq.${email},email2.eq.${email}`)
@@ -406,7 +406,7 @@ async function afterLogin() {
 
   if (error || !couples?.length) {
     showToast('Akun belum terhubung ke couple. Daftar dulu ya.', 'error');
-    await supabase.auth.signOut();
+    await sbClient.auth.signOut();
     return;
   }
 
@@ -480,7 +480,7 @@ $('login-btn').addEventListener('click', async () => {
   if (!email || !password) { showToast('Isi email dan password', 'error'); return; }
 
   setAuthLoading(true);
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
   setAuthLoading(false);
 
   if (error) { showToast('Login gagal: ' + error.message, 'error'); return; }
@@ -506,13 +506,13 @@ $('register-btn').addEventListener('click', async () => {
   setAuthLoading(true);
 
   // 1. Sign up user 1
-  const { data: signupData, error: signupErr } = await supabase.auth.signUp({ email: email1, password });
+  const { data: signupData, error: signupErr } = await sbClient.auth.signUp({ email: email1, password });
   if (signupErr) { setAuthLoading(false); showToast('Registrasi gagal: ' + signupErr.message, 'error'); return; }
 
   currentUser = signupData.user;
 
   // 2. Create couple record
-  const { data: couple, error: coupleErr } = await supabase.from('couples').insert({
+  const { data: couple, error: coupleErr } = await sbClient.from('couples').insert({
     name1, name2, email1, email2, currency,
   }).select().single();
 
@@ -559,7 +559,7 @@ $('skip-invite-btn').addEventListener('click', async () => {
 $('logout-btn').addEventListener('click', async () => {
   const ok = await showConfirm('Logout?', 'Kamu akan keluar dari CoupleGoal.');
   if (!ok) return;
-  await supabase.auth.signOut();
+  await sbClient.auth.signOut();
   location.reload();
 });
 
@@ -1534,8 +1534,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('DOMContentLoaded', async () => {
   // Init Supabase — harus di sini supaya CDN sudah siap
   try {
-    const { createClient } = window.supabase;
-    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { createClient } = window.sbClient;
+    sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch(e) {
     console.error('Supabase gagal load:', e);
   }
