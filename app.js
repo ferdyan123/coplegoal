@@ -1534,7 +1534,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('DOMContentLoaded', async () => {
   // Init Supabase — harus di sini supaya CDN sudah siap
   try {
-    const { createClient } = window.sbClient;
+    const { createClient } = window.supabase;
     sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch(e) {
     console.error('Supabase gagal load:', e);
