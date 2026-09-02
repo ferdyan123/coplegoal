@@ -1530,6 +1530,100 @@ document.addEventListener('keydown', e => {
 
 
 
+
+/* ══════════════════════════════════════════
+   APP INIT
+══════════════════════════════════════════ */
+function initApp() {
+  updateSidebarCouple();
+
+  // Sidebar overlay
+  sidebarOverlay = document.createElement('div');
+  sidebarOverlay.className = 'sidebar-overlay';
+  document.body.appendChild(sidebarOverlay);
+  sidebarOverlay.addEventListener('click', () => {
+    $('sidebar').classList.remove('open');
+    sidebarOverlay.classList.remove('show');
+  });
+
+  // Nav
+  $$('.nav-item').forEach(btn => btn.addEventListener('click', () => navigateTo(btn.dataset.page)));
+
+  // Mobile menu
+  $('menu-toggle').addEventListener('click', () => {
+    $('sidebar').classList.toggle('open');
+    sidebarOverlay.classList.toggle('show');
+  });
+
+  // Topbar & sidebar actions
+  $('see-all-tx').addEventListener('click',      () => navigateTo('transactions'));
+  $('add-tx-btn').addEventListener('click',       () => openAddTransaction());
+  $('add-tx-btn2').addEventListener('click',      () => openAddTransaction());
+  $('open-settings').addEventListener('click',   openSettings);
+  $('topbar-settings').addEventListener('click', openSettings);
+  $('settings-close').addEventListener('click',  closeSettings);
+  $('settings-cancel').addEventListener('click', closeSettings);
+  $('settings-save').addEventListener('click',   saveSettings);
+  $('sidebar-theme-toggle').addEventListener('click', toggleTheme);
+  $('topbar-theme-toggle').addEventListener('click', toggleTheme);
+  $$('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+
+  // TX modal
+  $('tx-close').addEventListener('click',  closeTxModal);
+  $('tx-cancel').addEventListener('click', closeTxModal);
+  $('tx-save').addEventListener('click',   saveTransaction);
+  $('tx-type').addEventListener('change',    populateTxDescriptionOptions);
+  $('tx-assignee').addEventListener('change', populateTxDescriptionOptions);
+
+  // Budget modal
+  $('bm-close').addEventListener('click',  closeBudgetModal);
+  $('bm-cancel').addEventListener('click', closeBudgetModal);
+  $('bm-save').addEventListener('click',   saveBudgetItem);
+
+  // Add item buttons
+  $$('.add-item-btn').forEach(btn => btn.addEventListener('click', () => openAddBudgetItem(btn.dataset.category)));
+
+  // Filters
+  ['filter-type', 'filter-assignee', 'filter-search', 'sort-tx'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('input', () => { if (currentPage === 'transactions') renderTransactionsPage(); });
+  });
+
+  // Data management
+  $('export-btn')?.addEventListener('click',      exportData);
+  $('dash-export-btn').addEventListener('click',  exportData);
+  $('sidebar-export-btn').addEventListener('click', exportData);
+  $('import-file').addEventListener('change',     e => handleImportFile(e.target.files[0]));
+  $('reset-btn').addEventListener('click',        resetAllData);
+  $('reset-month-btn').addEventListener('click',  resetMonthData);
+  $('import-cancel-btn').addEventListener('click', () => { $('import-modal').classList.add('hidden'); pendingImportData = null; });
+  $('import-modal-close').addEventListener('click', () => { $('import-modal').classList.add('hidden'); pendingImportData = null; });
+  $('import-confirm-btn').addEventListener('click', () => {
+    if (pendingImportData) {
+      state = deepMerge(state, pendingImportData);
+      saveState();
+      applyTheme(state.settings.theme);
+      updateSidebarCouple();
+      $('import-modal').classList.add('hidden');
+      showToast('Data berhasil diimpor ✅');
+      renderPage(currentPage);
+      pendingImportData = null;
+    }
+  });
+
+  // Close modals on overlay click
+  [$('tx-modal'), $('budget-modal'), $('settings-modal'), $('goal-modal')].forEach(modal => {
+    if (modal) modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+  });
+
+  // Auto-detect theme
+  if (!state.settings.theme) {
+    state.settings.theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  applyTheme(state.settings.theme);
+  navigateTo('dashboard');
+}
+
 /* ══════════════════════════════════════════
    BOOTSTRAP
 ══════════════════════════════════════════ */
