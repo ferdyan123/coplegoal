@@ -568,6 +568,8 @@ $('logout-btn').addEventListener('click', async () => {
 
 
 
+} /* end initAllListeners */
+
 /* ══════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════ */
@@ -1526,7 +1528,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-} /* end initAllListeners */
+
 
 /* ══════════════════════════════════════════
    BOOTSTRAP
