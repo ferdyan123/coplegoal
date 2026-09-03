@@ -700,6 +700,15 @@ function renderHomePage() {
   if (namesEl && s.name1 && s.name2) {
     namesEl.textContent = s.name1 + ' & ' + s.name2;
   }
+  // Update nama pasangan di assignee cards
+  const p1Title = document.getElementById('home-assignee-title-p1');
+  const p2Title = document.getElementById('home-assignee-title-p2');
+  const p1Icon  = document.getElementById('home-assignee-icon-p1');
+  const p2Icon  = document.getElementById('home-assignee-icon-p2');
+  if (p1Title) p1Title.textContent = s.name1 || 'Pasangan 1';
+  if (p2Title) p2Title.textContent = s.name2 || 'Pasangan 2';
+  if (p1Icon)  p1Icon.textContent  = (s.name1?.[0] || '👤').toUpperCase();
+  if (p2Icon)  p2Icon.textContent  = (s.name2?.[0] || '👤').toUpperCase();
 }
 
 /* ══════════════════════════════════════════
@@ -1303,7 +1312,7 @@ function renderCategoryPage(cat) {
    BUDGET ITEM MODAL
 ══════════════════════════════════════════ */
 function openAddBudgetItem(cat) {
-  $('bm-title').textContent   = 'Tambah Item';
+  $('bm-title').textContent   = 'Tambah Anggaran';
   $('bm-category').value      = cat;
   $('bm-edit-index').value    = -1;
   $('bm-item-id').value       = '';
@@ -1311,6 +1320,18 @@ function openAddBudgetItem(cat) {
   $('bm-amount').value        = '';
   $('bm-assignee').value      = 'shared';
   $('bm-currency-prefix').textContent = state.settings.currency;
+
+  // Placeholder kontekstual per kategori
+  const placeholders = {
+    income:      'contoh: Gaji, Freelance, Bisnis, Dividen…',
+    fixed:       'contoh: Sewa Rumah, Internet, Asuransi, Streaming…',
+    variable:    'contoh: Makan, Bensin, Belanja, Hiburan…',
+    loan:        'contoh: KPR, Cicilan Motor, Paylater, KTA…',
+    savings:     'contoh: Dana Darurat, Tabungan Nikah, Deposito…',
+    investments: 'contoh: Reksa Dana, Saham, Emas, Crypto…',
+  };
+  $('bm-desc').placeholder = placeholders[cat] || 'contoh: Gaji, Sewa Rumah…';
+
   updateBudgetModalAssigneeNames();
   $('budget-modal').classList.remove('hidden');
   setTimeout(() => $('bm-desc').focus(), 100);
@@ -1320,7 +1341,13 @@ window.openAddBudgetItem = openAddBudgetItem;
 function openEditBudgetItem(cat, idx) {
   const item = state.budgetItems[cat][idx];
   if (!item) return;
-  $('bm-title').textContent   = 'Edit Item';
+  $('bm-title').textContent   = 'Edit Anggaran';
+  const placeholders = {
+    income:'contoh: Gaji, Freelance, Bisnis…', fixed:'contoh: Sewa Rumah, Internet…',
+    variable:'contoh: Makan, Bensin, Belanja…', loan:'contoh: KPR, Cicilan Motor…',
+    savings:'contoh: Dana Darurat, Tabungan Nikah…', investments:'contoh: Reksa Dana, Saham…',
+  };
+  $('bm-desc').placeholder = placeholders[cat] || 'contoh: Gaji, Sewa Rumah…';
   $('bm-category').value      = cat;
   $('bm-edit-index').value    = idx;
   $('bm-item-id').value       = item.id || '';
@@ -1373,14 +1400,44 @@ function updateBudgetModalAssigneeNames() {
 /* ══════════════════════════════════════════
    TRANSACTION MODAL
 ══════════════════════════════════════════ */
+
+/* ── Goal field di transaksi tabungan ── */
+function updateTxGoalField(type) {
+  const field = $('tx-goal-field');
+  const sel   = $('tx-goal-select');
+  if (!field || !sel) return;
+
+  const show = (type === 'savings' || type === 'investments') && (state.goals || []).length > 0;
+  field.style.display = show ? '' : 'none';
+
+  if (show) {
+    sel.innerHTML = '<option value="">— Tidak terkait goal —</option>' +
+      (state.goals || []).map(g =>
+        `<option value="${g.id}">${g.icon || '🎯'} ${g.name} (${fmt(g.saved)} / ${fmt(g.target)})</option>`
+      ).join('');
+  }
+}
+
+const TX_PLACEHOLDERS = {
+  income:      'contoh: Gaji, Freelance, Transfer Masuk…',
+  fixed:       'contoh: Sewa Rumah, Listrik, Internet…',
+  variable:    'contoh: Makan Siang, Bensin, Belanja…',
+  loan:        'contoh: Cicilan KPR, Bayar Paylater…',
+  savings:     'contoh: Setor Tabungan, Dana Darurat…',
+  investments: 'contoh: Beli Reksa Dana, Tambah Saham…',
+};
+
 function openAddTransaction(prefillType) {
   const today = new Date().toISOString().split('T')[0];
+  const type = prefillType || 'income';
   $('tx-date').value     = today;
-  $('tx-type').value     = prefillType || 'income';
+  $('tx-type').value     = type;
   $('tx-assignee').value = 'shared';
   $('tx-desc').value     = '';
   $('tx-amount').value   = '';
   $('tx-currency-prefix').textContent = state.settings.currency;
+  $('tx-desc').placeholder = TX_PLACEHOLDERS[type] || 'contoh: Gaji, Belanja…';
+  updateTxGoalField(type);
   updateTxAssigneeNames();
   populateTxDescriptionOptions();
   $('tx-modal').classList.remove('hidden');
@@ -1464,7 +1521,7 @@ function saveSettings() {
 }
 
 function toggleTheme() {
-  const themes = ['dark', 'light', 'rose', 'ocean'];
+  const themes = ['dark', 'light', 'rose', 'ocean', 'sakura'];
   const idx = themes.indexOf(state.settings.theme);
   applyTheme(themes[(idx + 1) % themes.length]);
   saveState();
@@ -1474,9 +1531,9 @@ function applyTheme(theme) {
   state.settings.theme = theme;
   document.documentElement.setAttribute('data-theme', theme);
   $$('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
-  const icons = { dark: '🌙', light: '☀️', rose: '🌸', ocean: '🌊' };
+  const icons = { dark: '🌙', light: '☀️', rose: '🌸', ocean: '🌊', sakura: '🌺' };
   const icon = icons[theme] || '🌙';
-  const labels = { dark: 'Mode Gelap', light: 'Mode Terang', rose: 'Mode Rose', ocean: 'Mode Ocean' };
+  const labels = { dark: 'Mode Gelap', light: 'Mode Terang', rose: 'Mode Lupi', ocean: 'Mode Ocean', sakura: 'Mode Sakura' };
   const sidebarBtn = document.querySelector('#sidebar-theme-toggle');
   if (sidebarBtn) sidebarBtn.innerHTML = `<span id="sidebar-theme-icon">${icon}</span> ${labels[theme] || ''}`;
   const topbarIcon = $('topbar-theme-icon');
@@ -1621,7 +1678,12 @@ function initApp() {
   $('tx-close').addEventListener('click',  closeTxModal);
   $('tx-cancel').addEventListener('click', closeTxModal);
   $('tx-save').addEventListener('click',   saveTransaction);
-  $('tx-type').addEventListener('change',    populateTxDescriptionOptions);
+  $('tx-type').addEventListener('change', () => {
+    const type = $('tx-type').value;
+    $('tx-desc').placeholder = TX_PLACEHOLDERS[type] || 'contoh: Gaji, Belanja…';
+    updateTxGoalField(type);
+    populateTxDescriptionOptions();
+  });
   $('tx-assignee').addEventListener('change', populateTxDescriptionOptions);
 
   // Budget modal
