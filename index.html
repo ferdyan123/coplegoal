@@ -7,7 +7,7 @@
   <meta name="description" content="Kelola keuangan bersama pasangan dengan cerdas. Track budget, tabungan, dan raih tujuan finansial bersama.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -383,6 +383,37 @@
             </div>
             <div class="home-concept-note">
               💡 <strong>Selisih</strong> = Aktual − Anggaran. Kalau minus (▼) artinya masih on budget. Kalau plus (▲) artinya over budget.
+            </div>
+          </div>
+
+          <!-- Penjelasan Pemilik -->
+          <div class="home-section">
+            <div class="home-section-header">
+              <h2 class="home-section-title">👥 Pengelompokan Pemilik</h2>
+              <p class="home-section-sub">Setiap item anggaran dan transaksi harus di-assign ke salah satu dari tiga kelompok ini.</p>
+            </div>
+            <div class="home-assignee-grid">
+              <div class="home-assignee-card shared">
+                <div class="home-assignee-icon">🤝</div>
+                <div class="home-assignee-title">Bersama</div>
+                <div class="home-assignee-desc">Biaya yang ditanggung atau diterima berdua. Contoh: sewa rumah bersama, tagihan listrik, makan bareng, liburan.</div>
+                <div class="home-assignee-tip">Muncul di breakdown kedua pasangan & kolom "Shared"</div>
+              </div>
+              <div class="home-assignee-card p1">
+                <div class="home-assignee-icon" id="home-assignee-icon-p1">👤</div>
+                <div class="home-assignee-title" id="home-assignee-title-p1">Pasangan 1</div>
+                <div class="home-assignee-desc">Biaya atau pemasukan milik pasangan pertama (pendaftar). Contoh: gaji sendiri, cicilan HP pribadi, langganan pribadi.</div>
+                <div class="home-assignee-tip">Hanya muncul di breakdown pasangan 1</div>
+              </div>
+              <div class="home-assignee-card p2">
+                <div class="home-assignee-icon" id="home-assignee-icon-p2">👤</div>
+                <div class="home-assignee-title" id="home-assignee-title-p2">Pasangan 2</div>
+                <div class="home-assignee-desc">Biaya atau pemasukan milik pasangan kedua. Contoh: gaji pasangan, pengeluaran pribadi pasangan.</div>
+                <div class="home-assignee-tip">Hanya muncul di breakdown pasangan 2</div>
+              </div>
+            </div>
+            <div class="home-concept-note">
+              💡 <strong>Penting:</strong> Pastikan pemilik di item anggaran dan transaksi <strong>sama</strong> agar aktual terhitung dengan benar. Kalau anggaran "Bersama" tapi transaksi dicatat sebagai individu, aktual tidak akan match.
             </div>
           </div>
 
@@ -852,6 +883,7 @@
           <option id="tx-assignee-p2" value="p2">👤 —</option>
         </select>
       </div>
+      <div class="form-field" id="tx-goal-field" style="display:none"><label>🎯 Untuk Goal</label><select id="tx-goal-select"><option value="">— Tidak terkait goal —</option></select></div>
       <div class="form-field"><label>📝 Deskripsi</label><input id="tx-desc" type="text" placeholder="contoh: Gaji, Belanja, Listrik…" list="tx-desc-list" autocomplete="off"><datalist id="tx-desc-list"></datalist></div>
       <div class="form-field"><label>💵 Jumlah</label>
         <div class="input-prefix-wrap"><span id="tx-currency-prefix" class="input-prefix">Rp</span><input id="tx-amount" type="number" min="0" step="any" placeholder="0"></div>
@@ -956,8 +988,9 @@
         <div class="theme-buttons">
           <button class="theme-btn" data-theme="dark">🌙 Gelap</button>
           <button class="theme-btn" data-theme="light">☀️ Terang</button>
-          <button class="theme-btn" data-theme="rose">🌸 Rose</button>
+          <button class="theme-btn" data-theme="rose">🌸 Lupi</button>
           <button class="theme-btn" data-theme="ocean">🌊 Ocean</button>
+          <button class="theme-btn" data-theme="sakura">🌺 Sakura</button>
         </div>
       </div>
       <div class="settings-section">
