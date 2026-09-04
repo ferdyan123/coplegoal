@@ -2500,10 +2500,10 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
 .sticker-20 { background-position: -400px -300px; }
 
 /* ── Source image per tema ── */
-[data-theme="dark"]  .sticker { background-image: url('drako.png'); }
-[data-theme="yuki"]  .sticker { background-image: url('yuki.png'); }
-[data-theme="rose"]  .sticker { background-image: url('pupi.png'); }
-[data-theme="ocean"] .sticker { background-image: url('yuki.png'); }
+[data-theme="dark"]  .sticker { background-image: url('animasi/drako.png'); }
+[data-theme="yuki"]  .sticker { background-image: url('animasi/yuki.png'); }
+[data-theme="rose"]  .sticker { background-image: url('animasi/pupi.png'); }
+[data-theme="ocean"] .sticker { background-image: url('animasi/yuki.png'); }
 
 /* ── Kondisi khusus: override stiker tertentu ── */
 /* Keuangan kritis → nangis */
