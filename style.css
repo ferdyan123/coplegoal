@@ -115,42 +115,42 @@
   --shadow-lg: 0 8px 32px rgba(91,184,245,0.2);
 }
 
-/* ── 🩷 PUPI THEME (pink cerah + teal spike, cute & playful) ── */
+/* ── 🩷 PUPI THEME (soft pink full — gaya Kuaze, tanpa teal) ── */
 [data-theme="rose"] {
-  --bg-base:       #fff0f7;
-  --bg-surface:    #ffffff;
-  --bg-elevated:   #ffe2f0;
-  --bg-overlay:    rgba(255,240,247,0.93);
+  --bg-base:       #fdf2f6;
+  --bg-surface:    #fff7fa;
+  --bg-elevated:   #fce8f1;
+  --bg-overlay:    rgba(253,242,246,0.95);
 
-  --glass-bg:      rgba(255,255,255,0.78);
-  --glass-border:  rgba(240,66,122,0.18);
+  --glass-bg:      rgba(255,255,255,0.82);
+  --glass-border:  rgba(220,90,138,0.16);
 
-  --text-primary:  #3a0d20;
-  --text-secondary:#8a3058;
-  --text-muted:    #c07090;
+  --text-primary:  #2d0a1a;
+  --text-secondary:#7a2d50;
+  --text-muted:    #c48aa8;
 
-  --accent:        #f0427a;
-  --accent-soft:   rgba(240,66,122,0.12);
-  --accent-2:      #2ecfb0;
-  --accent-2-soft: rgba(46,207,176,0.14);
-  --accent-3:      #a855f7;
-  --accent-3-soft: rgba(168,85,247,0.1);
+  --accent:        #e05a8c;
+  --accent-soft:   rgba(224,90,140,0.13);
+  --accent-2:      #f4a0c0;
+  --accent-2-soft: rgba(244,160,192,0.18);
+  --accent-3:      #c43070;
+  --accent-3-soft: rgba(196,48,112,0.12);
 
-  --border:        rgba(240,66,122,0.13);
-  --input-bg:      rgba(255,255,255,0.92);
-  --input-border:  rgba(240,66,122,0.22);
+  --border:        rgba(220,90,138,0.13);
+  --input-bg:      rgba(255,255,255,0.94);
+  --input-border:  rgba(220,90,138,0.22);
 
-  --chart-axis:    #c07090;
-  --chart-grid:    rgba(240,66,122,0.06);
+  --chart-axis:    #c48aa8;
+  --chart-grid:    rgba(220,90,138,0.07);
 
-  --scrollbar-thumb: rgba(240,66,122,0.28);
-  --success: #2ecfb0;
-  --danger:  #f87171;
-  --nav-active-bg:   rgba(240,66,122,0.1);
+  --scrollbar-thumb: rgba(220,90,138,0.24);
+  --nav-active-bg:   rgba(220,90,138,0.11);
+  --success: #e05a8c;
+  --danger:  #c43070;
 
-  --shadow-sm: 0 1px 3px rgba(240,66,122,0.12);
-  --shadow-md: 0 4px 16px rgba(240,66,122,0.16);
-  --shadow-lg: 0 8px 32px rgba(240,66,122,0.2);
+  --shadow-sm: 0 1px 3px rgba(220,90,138,0.1);
+  --shadow-md: 0 4px 16px rgba(220,90,138,0.15);
+  --shadow-lg: 0 8px 32px rgba(220,90,138,0.2);
 }
 
 /* ── 🌊 OCEAN THEME ── */
@@ -788,19 +788,33 @@ body {
   height: 3px;
   border-radius: 0 0 var(--r-lg) var(--r-lg);
 }
-.income-card::after     { background: var(--income-color); }
-.expense-card::after    { background: var(--expense-color); }
-.savings-card::after    { background: var(--savings-color); }
-.balance-card::after    { background: var(--accent); }
+.income-card::after     { background: var(--accent); }
+.expense-card::after    { background: var(--accent-2); }
+.savings-card::after    { background: var(--accent); }
+.balance-card::after    { background: var(--accent-3); }
 
 .summary-icon { font-size: 1.5rem; }
 
+.summary-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
 .summary-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  opacity: 0.8;
 }
 
 .summary-val {
@@ -823,13 +837,14 @@ body {
   font-weight: 700;
   padding: 0.2rem 0.55rem;
   border-radius: var(--r-full);
-  background: var(--accent-3-soft);
-  color: var(--accent-3);
+  background: var(--accent-soft);
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   align-self: flex-start;
+  border: 1px solid var(--glass-border);
 }
-.summary-pill.over { background: rgba(248,113,113,0.15); color: #f87171; }
+.summary-pill.over { background: var(--danger, #f87171); background-opacity: 0.15; color: var(--danger, #f87171); border-color: transparent; }
 
 /* ══════════════════════════════════════════
    CHARTS
@@ -2656,6 +2671,19 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   font-size: 0.88rem;
   color: rgba(255,255,255,0.78);
   margin-top: 0.3rem;
+}
+
+.dash-greeting-msg {
+  margin-top: 0.75rem;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.9rem;
+  line-height: 1.5;
+  backdrop-filter: blur(4px);
+  max-width: 480px;
 }
 
 .dash-greeting-month-badge {
