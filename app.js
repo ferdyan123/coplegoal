@@ -73,6 +73,17 @@ const CATEGORIES = [
 ];
 const EXPENSE_CATEGORIES = ['fixed', 'variable', 'loan'];
 
+/* Default kategori custom untuk income & expenses */
+const DEFAULT_INCOME_CATEGORIES = [
+  'Gaji Pekerjaan', 'Freelance', 'Bisnis', 'Hasil Jualan', 'Uang Saku',
+  'Dividen / Investasi', 'Bonus', 'Transfer Masuk',
+];
+const DEFAULT_EXPENSE_CATEGORIES = [
+  'Makanan & Minuman', 'Transportasi', 'Belanja Harian', 'Sewa/Kos',
+  'Internet/WiFi', 'Listrik & Air', 'Hiburan/Lifestyle', 'Kesehatan',
+  'Pendidikan', 'Cicilan', 'Tabungan', 'Lain-lain',
+];
+
 /* ══════════════════════════════════════════
    STATE
 ══════════════════════════════════════════ */
@@ -88,6 +99,8 @@ let state = {
   transactions: [],
   goals: [],
   splitHistory: [],
+  incomeCategories: [...DEFAULT_INCOME_CATEGORIES],
+  expenseCategories: [...DEFAULT_EXPENSE_CATEGORIES],
 };
 
 /* ══════════════════════════════════════════
@@ -584,7 +597,8 @@ function navigateTo(page) {
   $(`nav-${page}`)?.classList.add('active');
 
   // Show/hide + Anggaran button di topbar
-  const budgetPages = ['income','fixed','variable','loan','savings','investments'];
+  const budgetPages = ['fixed','variable','loan','savings','investments'];
+  const hiddenPages = ['income','expenses']; // these have inline forms
   const addBudgetBtn = $('add-budget-btn');
   if (addBudgetBtn) addBudgetBtn.style.display = budgetPages.includes(page) ? '' : 'none';
 
@@ -592,7 +606,8 @@ function navigateTo(page) {
     home: '🏠 Panduan', dashboard: 'Dashboard', transactions: '📋 Transaksi',
     report: '📊 Laporan Bulanan', goals: '🎯 Savings Goals',
     split: '✂️ Split Calculator',
-    income: '💼 Pemasukan', fixed: '🏠 Pengeluaran Tetap',
+    income: '💼 Pemasukan', expenses: '🛍️ Pengeluaran',
+    fixed: '🏠 Pengeluaran Tetap',
     variable: '🛍️ Pengeluaran Variabel', loan: '💳 Cicilan',
     savings: '🐷 Tabungan', investments: '📈 Investasi',
   };
@@ -608,6 +623,8 @@ function navigateTo(page) {
 function renderPage(page) {
   if (page === 'home')         renderHomePage();
   else if (page === 'dashboard')    renderDashboard();
+  else if (page === 'income')  renderIncomePage();
+  else if (page === 'expenses') renderExpensesPage();
   else if (CATEGORIES.find(c => c.key === page)) renderCategoryPage(page);
   else if (page === 'transactions') renderTransactionsPage();
   else if (page === 'report')  renderMonthlyReport();
@@ -1250,6 +1267,557 @@ function renderSplitHistory() {
 }
 
 /* ══════════════════════════════════════════
+   KUAZE-STYLE: INCOME PAGE
+══════════════════════════════════════════ */
+let incomeDonutChart = null, incomeTrendChart = null;
+let incomeViewMonth = null; // null = use state.settings.month
+
+function getIncomeViewMonth() {
+  return incomeViewMonth || state.settings.month;
+}
+
+function calcActualForMonthAndAssignee(cat, month, assignee) {
+  return state.transactions.filter(t => {
+    if (t.type !== cat) return false;
+    if (month && t.date && t.date.substring(0, 7) !== month) return false;
+    if (assignee && t.assignee !== assignee) return false;
+    return true;
+  }).reduce((s, t) => s + (t.amount || 0), 0);
+}
+
+function getPrevMonth(monthStr) {
+  if (!monthStr) return null;
+  const [y, m] = monthStr.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function getNextMonth(monthStr) {
+  if (!monthStr) return null;
+  const [y, m] = monthStr.split('-').map(Number);
+  const d = new Date(y, m, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function makeDeltaBadge(curr, prev) {
+  if (!prev || prev === 0) return { text: '—', cls: 'neutral' };
+  const pct = ((curr - prev) / prev * 100).toFixed(0);
+  const up = parseFloat(pct) > 0;
+  return { text: (up ? '▲' : '▼') + ' ' + Math.abs(pct) + '%', cls: up ? 'up' : '' };
+}
+
+function renderIncomePage() {
+  const month = getIncomeViewMonth();
+  const s = state.settings;
+
+  // Ensure categories exist
+  if (!state.incomeCategories || !state.incomeCategories.length) {
+    state.incomeCategories = [...DEFAULT_INCOME_CATEGORIES];
+  }
+
+  // Month nav
+  $('income-month-label').textContent = monthLabel(month) || '—';
+  $('income-form-date').value = $('income-form-date').value || new Date().toISOString().split('T')[0];
+
+  // Stats
+  const prevMonth = getPrevMonth(month);
+  const total = calcActualForMonthAndAssignee('income', month, null);
+  const prevTotal = calcActualForMonthAndAssignee('income', prevMonth, null);
+  const shared = calcActualForMonthAndAssignee('income', month, 'shared');
+  const p1 = calcActualForMonthAndAssignee('income', month, 'p1');
+  const p2 = calcActualForMonthAndAssignee('income', month, 'p2');
+
+  $('income-total-val').textContent = fmt(total);
+  $('income-total-month').textContent = monthLabel(month);
+  const delta = makeDeltaBadge(total, prevTotal);
+  const deltaEl = $('income-total-delta');
+  deltaEl.textContent = delta.text + (delta.cls !== 'neutral' ? (delta.cls === 'up' ? ' Naik dari bulan lalu' : ' Turun dari bulan lalu') : ' Sama dengan bulan lalu');
+  deltaEl.className = 'kuaze-delta-badge ' + delta.cls;
+
+  $('income-shared-val').textContent = fmt(shared);
+  $('income-p1-label').textContent = (s.name1 || 'Pasangan 1').toUpperCase();
+  $('income-p2-label').textContent = (s.name2 || 'Pasangan 2').toUpperCase();
+  $('income-p1-val').textContent = fmt(p1);
+  $('income-p2-val').textContent = fmt(p2);
+
+  // Top category
+  const catAmounts = (state.incomeCategories || []).map(cat => ({
+    name: cat,
+    total: state.transactions.filter(t => t.type === 'income' && t.customCategory === cat && (!month || (t.date && t.date.substring(0,7) === month))).reduce((s,t) => s + t.amount, 0)
+  }));
+  const topCat = catAmounts.sort((a,b) => b.total - a.total)[0];
+  $('income-top-category').textContent = topCat && topCat.total > 0 ? topCat.name : '—';
+
+  // Populate form
+  $('income-form-currency').textContent = s.currency;
+  $('income-amount-label').textContent = `Jumlah (${s.currency})`;
+  populateIncomeFormCategories();
+  updateIncomeFormAssignees();
+
+  // Charts
+  renderIncomeDonut(month);
+  renderIncomeOwnerBars(month);
+  renderIncomeTrendChart(month);
+  renderIncomeHistory(month);
+}
+
+function populateIncomeFormCategories() {
+  const sel = $('income-form-category');
+  const cats = state.incomeCategories || DEFAULT_INCOME_CATEGORIES;
+  sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function updateIncomeFormAssignees() {
+  const s = state.settings;
+  $('income-form-p1').textContent = '👤 ' + (s.name1 || 'Pasangan 1');
+  $('income-form-p2').textContent = '👤 ' + (s.name2 || 'Pasangan 2');
+}
+
+function renderIncomeDonut(month) {
+  const ctx = $('income-donut-chart'); if (!ctx) return;
+  const cats = state.incomeCategories || DEFAULT_INCOME_CATEGORIES;
+  const COLORS = ['#34d399','#38bdf8','#7c6fff','#fbbf24','#fb923c','#c084fc','#f87171','#60a5fa'];
+  const data = cats.map(cat =>
+    state.transactions.filter(t => t.type === 'income' && t.customCategory === cat && (!month || (t.date && t.date.substring(0,7) === month))).reduce((s,t) => s + t.amount, 0)
+  );
+  const filtered = cats.map((cat, i) => ({ cat, val: data[i], color: COLORS[i % COLORS.length] })).filter(d => d.val > 0);
+  const total = filtered.reduce((s,d) => s + d.val, 0);
+
+  const legend = $('income-donut-legend');
+  legend.innerHTML = filtered.map(d => `
+    <div class="kuaze-legend-item">
+      <span class="kuaze-legend-dot" style="background:${d.color}"></span>
+      <span class="kuaze-legend-label">${d.cat}</span>
+      <span class="kuaze-legend-val">${fmt(d.val)}</span>
+    </div>`).join('') || '<div style="color:var(--text-muted);font-size:.8rem">Belum ada data</div>';
+
+  if (incomeDonutChart) { incomeDonutChart.destroy(); incomeDonutChart = null; }
+  if (!filtered.length) return;
+  incomeDonutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: filtered.map(d=>d.cat), datasets: [{ data: filtered.map(d=>d.val), backgroundColor: filtered.map(d=>d.color), borderWidth: 2, borderColor: 'transparent', hoverOffset: 6 }] },
+    options: { cutout: '70%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.parsed)}` } } } }
+  });
+}
+
+function renderIncomeOwnerBars(month) {
+  const s = state.settings;
+  const persons = [
+    { key: 'shared', label: '🤝 Bersama', color: '#7c6fff' },
+    { key: 'p1', label: s.name1 || 'Pasangan 1', color: '#34d399' },
+    { key: 'p2', label: s.name2 || 'Pasangan 2', color: '#38bdf8' },
+  ];
+  const vals = persons.map(p => calcActualForMonthAndAssignee('income', month, p.key));
+  const max = Math.max(...vals, 1);
+  $('income-owner-bars').innerHTML = persons.map((p, i) => `
+    <div class="kuaze-owner-bar-item">
+      <div class="kuaze-owner-bar-header">
+        <span class="kuaze-owner-bar-name">${p.label}</span>
+        <span class="kuaze-owner-bar-val">${fmt(vals[i])}</span>
+      </div>
+      <div class="kuaze-owner-bar-track">
+        <div class="kuaze-owner-bar-fill" style="width:${Math.min((vals[i]/max)*100,100)}%;background:${p.color}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderIncomeTrendChart(month) {
+  const ctx = $('income-trend-chart'); if (!ctx) return;
+  if (!month) return;
+  const [y, m] = month.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+  const data = labels.map(day => {
+    const dateStr = `${month}-${String(day).padStart(2,'0')}`;
+    return state.transactions.filter(t => t.type === 'income' && t.date === dateStr).reduce((s,t) => s + t.amount, 0);
+  });
+
+  $('income-trend-month-label').textContent = monthLabel(month);
+  if (incomeTrendChart) { incomeTrendChart.destroy(); incomeTrendChart = null; }
+  incomeTrendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.08)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#34d399' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.parsed.y)}` } } },
+      scales: {
+        x: { ticks: { color: getAxisColor(), font: { size: 9 } }, grid: { color: getGridColor() } },
+        y: { ticks: { color: getAxisColor(), font: { size: 9 }, callback: v => fmt(v) }, grid: { color: getGridColor() } }
+      }
+    }
+  });
+}
+
+function renderIncomeHistory(month) {
+  const txs = state.transactions.filter(t => t.type === 'income' && (!month || (t.date && t.date.substring(0,7) === month))).sort((a,b) => new Date(b.date) - new Date(a.date));
+  const el = $('income-history-list');
+  if (!txs.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada pemasukan bulan ini</p></div>`; return; }
+
+  // Group by date
+  const grouped = {};
+  txs.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+  const s = state.settings;
+  el.innerHTML = Object.entries(grouped).map(([date, items]) => `
+    <div class="kuaze-history-group">
+      <div class="kuaze-history-date">${fmtDate(date)}</div>
+      ${items.map(t => {
+        const ownerName = t.assignee === 'p1' ? (s.name1 || 'P1') : t.assignee === 'p2' ? (s.name2 || 'P2') : 'Bersama';
+        return `<div class="kuaze-history-item" data-id="${t.id}" onclick="toggleKuazeHistoryItem(this)">
+          <div class="kuaze-history-icon" style="background:rgba(52,211,153,.15);color:#34d399">💼</div>
+          <div class="kuaze-history-body">
+            <div class="kuaze-history-name">${t.description || '—'}</div>
+            <div class="kuaze-history-meta">${t.customCategory || 'Pemasukan'} · ${t.bank ? '· ' + t.bank : ''}</div>
+            <div class="kuaze-history-detail">
+              <div class="kuaze-history-detail-row"><span>Kategori</span><span>${t.customCategory || '—'}</span></div>
+              <div class="kuaze-history-detail-row"><span>Jenis</span><span>Pemasukan</span></div>
+              <div class="kuaze-history-detail-row"><span>Bank / Metode</span><span>${t.bank || '—'}</span></div>
+              <div class="kuaze-history-detail-row"><span>Catatan</span><span>${t.notes || '—'}</span></div>
+              <div class="kuaze-history-detail-actions">
+                <button class="kuaze-history-delete-btn" onclick="event.stopPropagation();deleteTx('${t.id}')">🗑️ Hapus Catatan</button>
+              </div>
+            </div>
+          </div>
+          <div class="kuaze-history-amount income">+${fmt(t.amount)}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+/* Save income from inline form */
+function saveIncomeForm() {
+  const date = $('income-form-date').value;
+  const cat  = $('income-form-category').value;
+  const amt  = getRawValue($('income-form-amount'));
+  const asn  = $('income-form-assignee').value;
+  const note = $('income-form-note').value.trim();
+
+  if (!date) { showToast('Pilih tanggal', 'error'); return; }
+  if (amt <= 0) { showToast('Jumlah harus lebih dari 0', 'error'); return; }
+
+  const tx = {
+    id: generateId(),
+    date, type: 'income',
+    customCategory: cat,
+    assignee: asn,
+    description: cat + (note ? (' — ' + note) : ''),
+    notes: note,
+    amount: amt,
+    budgetItemId: null,
+  };
+  state.transactions.unshift(tx);
+  saveState();
+  // Reset amount and note
+  $('income-form-amount').value = '';
+  $('income-form-amount').dataset.rawValue = '0';
+  $('income-form-note').value = '';
+  showToast('Pemasukan dicatat ✅');
+  renderIncomePage();
+}
+
+/* ══════════════════════════════════════════
+   KUAZE-STYLE: EXPENSES PAGE (Gabungan fixed + variable + loan)
+══════════════════════════════════════════ */
+let expDonutChart = null, expTrendChart = null;
+let expViewMonth = null;
+let expNeracaView = 'total'; // 'total' | 'per-category'
+
+function getExpViewMonth() { return expViewMonth || state.settings.month; }
+
+function getExpenseTotal(month, type) {
+  const cats = type ? [type] : EXPENSE_CATEGORIES;
+  return cats.reduce((s, c) => s + calcActualForMonthAndAssignee(c, month, null), 0);
+}
+
+function renderExpensesPage() {
+  const month = getExpViewMonth();
+  const s = state.settings;
+
+  if (!state.expenseCategories || !state.expenseCategories.length) {
+    state.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+  }
+
+  // Month nav
+  $('exp-month-label').textContent = monthLabel(month) || '—';
+  $('exp-form-date').value = $('exp-form-date').value || new Date().toISOString().split('T')[0];
+
+  const prevMonth = getPrevMonth(month);
+  const total = getExpenseTotal(month, null);
+  const prevTotal = getExpenseTotal(prevMonth, null);
+  const fixedTotal = getExpenseTotal(month, 'fixed');
+  const prevFixed = getExpenseTotal(prevMonth, 'fixed');
+  const varTotal = getExpenseTotal(month, 'variable') + getExpenseTotal(month, 'loan');
+  const prevVar = getExpenseTotal(prevMonth, 'variable') + getExpenseTotal(prevMonth, 'loan');
+
+  $('exp-total-val').textContent = fmt(total);
+  $('exp-total-month').textContent = monthLabel(month);
+  const totalDelta = makeDeltaBadge(total, prevTotal);
+  const totalDeltaEl = $('exp-total-delta');
+  totalDeltaEl.textContent = totalDelta.text + (totalDelta.cls !== 'neutral' ? (totalDelta.cls === 'up' ? ' Naik dari bulan lalu' : ' Turun dari bulan lalu') : ' Sama dengan bulan lalu');
+  totalDeltaEl.className = 'kuaze-delta-badge ' + (totalDelta.cls === 'up' ? '' : totalDelta.cls); // for expense, up=bad so no class change
+
+  $('exp-fixed-val').textContent = fmt(fixedTotal);
+  const fixedDelta = makeDeltaBadge(fixedTotal, prevFixed);
+  $('exp-fixed-delta').textContent = fixedDelta.text;
+
+  $('exp-variable-val').textContent = fmt(varTotal);
+  const varDelta = makeDeltaBadge(varTotal, prevVar);
+  $('exp-variable-delta').textContent = varDelta.text;
+
+  // Top category
+  const catAmounts = (state.expenseCategories || []).map(cat => ({
+    name: cat,
+    total: state.transactions.filter(t => EXPENSE_CATEGORIES.includes(t.type) && t.customCategory === cat && (!month || (t.date && t.date.substring(0,7) === month))).reduce((s,t) => s + t.amount, 0)
+  }));
+  const topCat = catAmounts.sort((a,b) => b.total - a.total)[0];
+  $('exp-top-category').textContent = topCat && topCat.total > 0 ? topCat.name : '—';
+
+  // Form
+  $('exp-form-currency').textContent = s.currency;
+  $('exp-amount-label').textContent = `Jumlah (${s.currency})`;
+  populateExpFormCategories();
+  updateExpFormAssignees();
+
+  // Neraca
+  renderExpNeraca(month);
+
+  // Charts
+  renderExpDonut(month);
+  renderExpOwnerBars(month);
+  renderExpTrendChart(month);
+  renderExpHistory(month);
+}
+
+function populateExpFormCategories() {
+  const sel = $('exp-form-category');
+  const cats = state.expenseCategories || DEFAULT_EXPENSE_CATEGORIES;
+  sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function updateExpFormAssignees() {
+  const s = state.settings;
+  $('exp-form-p1').textContent = '👤 ' + (s.name1 || 'Pasangan 1');
+  $('exp-form-p2').textContent = '👤 ' + (s.name2 || 'Pasangan 2');
+}
+
+function renderExpNeraca(month) {
+  const actual = getExpenseTotal(month, null);
+  const budget = EXPENSE_CATEGORIES.reduce((s, c) => s + calcBudget(c), 0);
+  const pct = budget > 0 ? Math.min((actual / budget) * 100, 100) : 0;
+  const sisa = budget - actual;
+
+  $('exp-neraca-actual').textContent = fmt(actual);
+  $('exp-neraca-budget').textContent = fmt(budget);
+
+  const fill = $('exp-neraca-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'kuaze-neraca-progress-fill' + (actual > budget && budget > 0 ? ' over' : '');
+
+  const sisaEl = $('exp-neraca-sisa');
+  if (budget === 0) {
+    sisaEl.textContent = 'Belum set anggaran';
+    sisaEl.className = 'kuaze-neraca-sisa';
+  } else if (sisa >= 0) {
+    sisaEl.textContent = `Masih aman, lanjutkan! Sisa ${fmt(sisa)}`;
+    sisaEl.className = 'kuaze-neraca-sisa ok';
+  } else {
+    sisaEl.textContent = `⚠️ Over budget ${fmt(Math.abs(sisa))}!`;
+    sisaEl.className = 'kuaze-neraca-sisa over';
+  }
+}
+
+function renderExpDonut(month) {
+  const ctx = $('exp-donut-chart'); if (!ctx) return;
+  const cats = state.expenseCategories || DEFAULT_EXPENSE_CATEGORIES;
+  const COLORS = ['#f87171','#fbbf24','#fb923c','#c084fc','#38bdf8','#34d399','#7c6fff','#60a5fa','#f472b6','#a3e635','#e879f9','#94a3b8'];
+  const data = cats.map(cat =>
+    state.transactions.filter(t => EXPENSE_CATEGORIES.includes(t.type) && t.customCategory === cat && (!month || (t.date && t.date.substring(0,7) === month))).reduce((s,t) => s + t.amount, 0)
+  );
+  const filtered = cats.map((cat, i) => ({ cat, val: data[i], color: COLORS[i % COLORS.length] })).filter(d => d.val > 0);
+
+  const legend = $('exp-donut-legend');
+  legend.innerHTML = filtered.map(d => `
+    <div class="kuaze-legend-item">
+      <span class="kuaze-legend-dot" style="background:${d.color}"></span>
+      <span class="kuaze-legend-label">${d.cat}</span>
+      <span class="kuaze-legend-val">${fmt(d.val)}</span>
+    </div>`).join('') || '<div style="color:var(--text-muted);font-size:.8rem">Belum ada data</div>';
+
+  if (expDonutChart) { expDonutChart.destroy(); expDonutChart = null; }
+  if (!filtered.length) return;
+  expDonutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: filtered.map(d=>d.cat), datasets: [{ data: filtered.map(d=>d.val), backgroundColor: filtered.map(d=>d.color), borderWidth: 2, borderColor: 'transparent', hoverOffset: 6 }] },
+    options: { cutout: '70%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.parsed)}` } } } }
+  });
+}
+
+function renderExpOwnerBars(month) {
+  const s = state.settings;
+  const persons = [
+    { key: 'shared', label: '🤝 Bersama', color: '#7c6fff' },
+    { key: 'p1', label: s.name1 || 'Pasangan 1', color: '#f87171' },
+    { key: 'p2', label: s.name2 || 'Pasangan 2', color: '#fbbf24' },
+  ];
+  const vals = persons.map(p => EXPENSE_CATEGORIES.reduce((s, c) => s + calcActualForMonthAndAssignee(c, month, p.key), 0));
+  const max = Math.max(...vals, 1);
+  $('exp-owner-bars').innerHTML = persons.map((p, i) => `
+    <div class="kuaze-owner-bar-item">
+      <div class="kuaze-owner-bar-header">
+        <span class="kuaze-owner-bar-name">${p.label}</span>
+        <span class="kuaze-owner-bar-val">${fmt(vals[i])}</span>
+      </div>
+      <div class="kuaze-owner-bar-track">
+        <div class="kuaze-owner-bar-fill" style="width:${Math.min((vals[i]/max)*100,100)}%;background:${p.color}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderExpTrendChart(month) {
+  const ctx = $('exp-trend-chart'); if (!ctx) return;
+  if (!month) return;
+  const [y, m] = month.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+  const data = labels.map(day => {
+    const dateStr = `${month}-${String(day).padStart(2,'0')}`;
+    return state.transactions.filter(t => EXPENSE_CATEGORIES.includes(t.type) && t.date === dateStr).reduce((s,t) => s + t.amount, 0);
+  });
+
+  $('exp-trend-month-label').textContent = monthLabel(month);
+  if (expTrendChart) { expTrendChart.destroy(); expTrendChart = null; }
+  expTrendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.08)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 2, pointHoverRadius: 5, pointBackgroundColor: '#f87171' }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.parsed.y)}` } } },
+      scales: {
+        x: { ticks: { color: getAxisColor(), font: { size: 9 } }, grid: { color: getGridColor() } },
+        y: { ticks: { color: getAxisColor(), font: { size: 9 }, callback: v => fmt(v) }, grid: { color: getGridColor() } }
+      }
+    }
+  });
+}
+
+function renderExpHistory(month) {
+  const txs = state.transactions.filter(t => EXPENSE_CATEGORIES.includes(t.type) && (!month || (t.date && t.date.substring(0,7) === month))).sort((a,b) => new Date(b.date) - new Date(a.date));
+  const el = $('exp-history-list');
+  if (!txs.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada pengeluaran bulan ini</p></div>`; return; }
+
+  const s = state.settings;
+  const typeIcon = { fixed: '🏠', variable: '🛍️', loan: '💳' };
+  const typeLabel = { fixed: 'Tetap', variable: 'Tidak Tetap', loan: 'Cicilan' };
+
+  const grouped = {};
+  txs.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+
+  el.innerHTML = Object.entries(grouped).map(([date, items]) => `
+    <div class="kuaze-history-group">
+      <div class="kuaze-history-date">${fmtDate(date)}</div>
+      ${items.map(t => {
+        const icon = typeIcon[t.type] || '💸';
+        const ownerName = t.assignee === 'p1' ? (s.name1||'P1') : t.assignee === 'p2' ? (s.name2||'P2') : 'Bersama';
+        return `<div class="kuaze-history-item" data-id="${t.id}" onclick="toggleKuazeHistoryItem(this)">
+          <div class="kuaze-history-icon" style="background:rgba(248,113,113,.15);color:#f87171">${icon}</div>
+          <div class="kuaze-history-body">
+            <div class="kuaze-history-name">${t.description || '—'}</div>
+            <div class="kuaze-history-meta">${t.customCategory || (CATEGORIES.find(c=>c.key===t.type)?.label||t.type)} · ${typeLabel[t.type]||''}</div>
+            <div class="kuaze-history-detail">
+              <div class="kuaze-history-detail-row"><span>Kategori</span><span>${t.customCategory || '—'}</span></div>
+              <div class="kuaze-history-detail-row"><span>Jenis</span><span>${typeLabel[t.type] || '—'}</span></div>
+              <div class="kuaze-history-detail-row"><span>Bank / Metode</span><span>${t.bank || '—'}</span></div>
+              <div class="kuaze-history-detail-row"><span>Catatan</span><span>${t.notes || '—'}</span></div>
+              <div class="kuaze-history-detail-actions">
+                <button class="kuaze-history-delete-btn" onclick="event.stopPropagation();deleteTx('${t.id}')">🗑️ Hapus Catatan</button>
+              </div>
+            </div>
+          </div>
+          <div class="kuaze-history-amount expense">-${fmt(t.amount)}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function saveExpenseForm() {
+  const date = $('exp-form-date').value;
+  const cat  = $('exp-form-category').value;
+  const amt  = getRawValue($('exp-form-amount'));
+  const type = $('exp-form-type').value;
+  const asn  = $('exp-form-assignee').value;
+  const bank = $('exp-form-bank').value;
+  const note = $('exp-form-note').value.trim();
+
+  if (!date) { showToast('Pilih tanggal', 'error'); return; }
+  if (amt <= 0) { showToast('Jumlah harus lebih dari 0', 'error'); return; }
+
+  const tx = {
+    id: generateId(),
+    date, type,
+    customCategory: cat,
+    assignee: asn,
+    description: cat + (note ? (' — ' + note) : ''),
+    notes: note,
+    bank,
+    amount: amt,
+    budgetItemId: null,
+  };
+  state.transactions.unshift(tx);
+  saveState();
+  $('exp-form-amount').value = '';
+  $('exp-form-amount').dataset.rawValue = '0';
+  $('exp-form-note').value = '';
+  showToast('Pengeluaran dicatat ✅');
+  renderExpensesPage();
+}
+
+/* History item expand/collapse */
+window.toggleKuazeHistoryItem = function(el) {
+  const wasExpanded = el.classList.contains('expanded');
+  // Collapse all in same list
+  el.closest('.kuaze-history-section')?.querySelectorAll('.kuaze-history-item.expanded').forEach(i => i.classList.remove('expanded'));
+  if (!wasExpanded) el.classList.add('expanded');
+};
+
+/* ══════════════════════════════════════════
+   CATEGORY MANAGER
+══════════════════════════════════════════ */
+let catManagerType = 'income'; // 'income' | 'expense'
+
+function openCategoryManager(type) {
+  catManagerType = type;
+  $('cat-manager-title').textContent = type === 'income' ? '⚙️ Kelola Kategori Pemasukan' : '⚙️ Kelola Kategori Pengeluaran';
+  $('cat-manager-type').value = type;
+  $('cat-manager-new-name').value = '';
+  renderCategoryManagerList();
+  $('cat-manager-modal').classList.remove('hidden');
+}
+window.openCategoryManager = openCategoryManager;
+
+function renderCategoryManagerList() {
+  const cats = catManagerType === 'income' ? (state.incomeCategories || DEFAULT_INCOME_CATEGORIES) : (state.expenseCategories || DEFAULT_EXPENSE_CATEGORIES);
+  const defaults = catManagerType === 'income' ? DEFAULT_INCOME_CATEGORIES : DEFAULT_EXPENSE_CATEGORIES;
+  $('cat-manager-list').innerHTML = cats.map((c, i) => {
+    const isDefault = defaults.includes(c);
+    return `<div class="cat-manager-item">
+      <span>${c}</span>
+      ${isDefault ? '<span class="cat-default-badge">default</span>' : ''}
+      <button title="Hapus" onclick="deleteCategoryItem(${i})">🗑️</button>
+    </div>`;
+  }).join('') || '<div style="color:var(--text-muted);font-size:.85rem;padding:.5rem">Belum ada kategori</div>';
+}
+
+window.deleteCategoryItem = function(idx) {
+  if (catManagerType === 'income') {
+    state.incomeCategories.splice(idx, 1);
+    if (!state.incomeCategories.length) state.incomeCategories = [...DEFAULT_INCOME_CATEGORIES];
+  } else {
+    state.expenseCategories.splice(idx, 1);
+    if (!state.expenseCategories.length) state.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+  }
+  saveState();
+  renderCategoryManagerList();
+};
+
+/* ══════════════════════════════════════════
    BUDGET CATEGORY PAGES
 ══════════════════════════════════════════ */
 function renderCategoryPage(cat) {
@@ -1554,6 +2122,16 @@ function updateSidebarCouple() {
 
   const filterP1 = $('filter-p1'); if (filterP1) filterP1.textContent = s.name1;
   const filterP2 = $('filter-p2'); if (filterP2) filterP2.textContent = s.name2;
+
+  // Income page form
+  const incP1 = $('income-form-p1'); if (incP1) incP1.textContent = '👤 ' + (s.name1 || 'Pasangan 1');
+  const incP2 = $('income-form-p2'); if (incP2) incP2.textContent = '👤 ' + (s.name2 || 'Pasangan 2');
+  const incP1Lbl = $('income-p1-label'); if (incP1Lbl) incP1Lbl.textContent = (s.name1 || 'Pasangan 1').toUpperCase();
+  const incP2Lbl = $('income-p2-label'); if (incP2Lbl) incP2Lbl.textContent = (s.name2 || 'Pasangan 2').toUpperCase();
+
+  // Expenses page form
+  const expP1 = $('exp-form-p1'); if (expP1) expP1.textContent = '👤 ' + (s.name1 || 'Pasangan 1');
+  const expP2 = $('exp-form-p2'); if (expP2) expP2.textContent = '👤 ' + (s.name2 || 'Pasangan 2');
   updateBudgetModalAssigneeNames();
   updateTxAssigneeNames();
 
@@ -1732,6 +2310,80 @@ function initApp() {
     state.settings.theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
   applyTheme(state.settings.theme);
+
+  // ── INCOME PAGE ──
+  initNumberInput('income-form-amount');
+
+  const incomeSubmit = $('income-form-submit');
+  if (incomeSubmit) incomeSubmit.addEventListener('click', saveIncomeForm);
+
+  const incomePrev = $('income-prev-month');
+  if (incomePrev) incomePrev.addEventListener('click', () => {
+    incomeViewMonth = getPrevMonth(getIncomeViewMonth());
+    renderIncomePage();
+  });
+  const incomeNext = $('income-next-month');
+  if (incomeNext) incomeNext.addEventListener('click', () => {
+    incomeViewMonth = getNextMonth(getIncomeViewMonth());
+    renderIncomePage();
+  });
+  const incomeCatBtn = $('income-manage-cats');
+  if (incomeCatBtn) incomeCatBtn.addEventListener('click', () => openCategoryManager('income'));
+
+  // ── EXPENSES PAGE ──
+  initNumberInput('exp-form-amount');
+
+  const expSubmit = $('exp-form-submit');
+  if (expSubmit) expSubmit.addEventListener('click', saveExpenseForm);
+
+  const expPrev = $('exp-prev-month');
+  if (expPrev) expPrev.addEventListener('click', () => {
+    expViewMonth = getPrevMonth(getExpViewMonth());
+    renderExpensesPage();
+  });
+  const expNext = $('exp-next-month');
+  if (expNext) expNext.addEventListener('click', () => {
+    expViewMonth = getNextMonth(getExpViewMonth());
+    renderExpensesPage();
+  });
+  const expCatBtn = $('exp-manage-cats');
+  if (expCatBtn) expCatBtn.addEventListener('click', () => openCategoryManager('expense'));
+
+  // Neraca view tabs
+  $$('.kuaze-neraca-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      $$('.kuaze-neraca-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      expNeracaView = btn.dataset.view;
+      renderExpNeraca(getExpViewMonth());
+    });
+  });
+
+  // ── CATEGORY MANAGER MODAL ──
+  const catClose = $('cat-manager-close');
+  if (catClose) catClose.addEventListener('click', () => $('cat-manager-modal').classList.add('hidden'));
+
+  const catAddBtn = $('cat-manager-add-btn');
+  if (catAddBtn) catAddBtn.addEventListener('click', () => {
+    const name = $('cat-manager-new-name').value.trim();
+    if (!name) { showToast('Masukkan nama kategori', 'error'); return; }
+    if (catManagerType === 'income') {
+      if (!state.incomeCategories) state.incomeCategories = [...DEFAULT_INCOME_CATEGORIES];
+      if (!state.incomeCategories.includes(name)) state.incomeCategories.push(name);
+    } else {
+      if (!state.expenseCategories) state.expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+      if (!state.expenseCategories.includes(name)) state.expenseCategories.push(name);
+    }
+    saveState();
+    $('cat-manager-new-name').value = '';
+    renderCategoryManagerList();
+    showToast('Kategori ditambahkan ✅');
+  });
+
+  // Close cat-manager modal on overlay click
+  const catModal = $('cat-manager-modal');
+  if (catModal) catModal.addEventListener('click', e => { if (e.target === catModal) catModal.classList.add('hidden'); });
+
   navigateTo('dashboard');
 }
 
