@@ -229,7 +229,8 @@
       <div class="nav-group">
         <div class="nav-group-label">Anggaran</div>
         <button class="nav-item" data-page="income" id="nav-income">💼 Pemasukan</button>
-        <button class="nav-item" data-page="expenses" id="nav-expenses">🛍️ Pengeluaran</button>
+        <button class="nav-item" data-page="fixed" id="nav-fixed">🏠 Pengeluaran Tetap</button>
+        <button class="nav-item" data-page="variable" id="nav-variable">🛍️ Variabel</button>
         <button class="nav-item" data-page="loan" id="nav-loan">💳 Cicilan</button>
         <button class="nav-item" data-page="savings" id="nav-savings">🐷 Tabungan</button>
         <button class="nav-item" data-page="investments" id="nav-investments">📈 Investasi</button>
@@ -249,7 +250,7 @@
 
     <div class="sidebar-bottom">
       <button class="sidebar-btn" id="sidebar-theme-toggle">
-        <span id="sidebar-theme-icon">🌙</span> Mode Gelap
+        <span id="sidebar-theme-icon">🖤</span> 🖤 Drako
       </button>
       <button class="sidebar-btn" id="sidebar-export-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -276,7 +277,7 @@
       <span class="topbar-title" id="topbar-title">Dashboard</span>
       <div class="topbar-actions">
         <button class="btn-icon" id="topbar-theme-toggle" aria-label="Toggle theme">
-          <span id="topbar-theme-icon">🌙</span>
+          <span id="topbar-theme-icon">🖤</span>
         </button>
         <button class="btn btn-ghost btn-sm" id="add-budget-btn" style="display:none">+ Anggaran</button>
         <button class="btn btn-primary btn-sm" id="add-tx-btn">+ Transaksi</button>
@@ -330,7 +331,8 @@
                   <div class="home-flow-desc">Masukkan rencana keuangan bulan ini di setiap kategori — berapa yang mau dimasukkan, dikeluarkan, ditabung.</div>
                   <div class="home-flow-links">
                     <button class="home-flow-link" onclick="navigateTo('income')">💼 Pemasukan →</button>
-                    <button class="home-flow-link" onclick="navigateTo('expenses')">🛍️ Pengeluaran →</button>
+                    <button class="home-flow-link" onclick="navigateTo('fixed')">🏠 Pengeluaran Tetap →</button>
+                    <button class="home-flow-link" onclick="navigateTo('variable')">🛍️ Variabel →</button>
                     <button class="home-flow-link" onclick="navigateTo('loan')">💳 Cicilan →</button>
                     <button class="home-flow-link" onclick="navigateTo('savings')">🐷 Tabungan →</button>
                     <button class="home-flow-link" onclick="navigateTo('investments')">📈 Investasi →</button>
@@ -599,6 +601,9 @@
           </div>
         </div>
 
+        <!-- FINANCE STICKER -->
+        <div id="finance-sticker-area"></div>
+
         <!-- SUMMARY CARDS -->
         <div class="summary-grid">
           <div class="summary-card income-card glass-card">
@@ -815,304 +820,22 @@
         </div>
       </section>
 
-      <!-- ══════════════════════════════════════════
-           TAB PEMASUKAN — Kuaze-style
-      ══════════════════════════════════════════ -->
-      <section id="page-income" class="page kuaze-page" aria-label="Pemasukan">
-
-        <!-- MONTH NAV -->
-        <div class="kuaze-month-nav">
-          <button class="kuaze-month-btn" id="income-prev-month">‹</button>
-          <span class="kuaze-month-label" id="income-month-label">—</span>
-          <button class="kuaze-month-btn" id="income-next-month">›</button>
-        </div>
-
-        <!-- SUMMARY CARDS -->
-        <div class="kuaze-summary-section">
-          <div class="kuaze-stat-card glass-card">
-            <div class="kuaze-stat-top">
-              <span class="kuaze-stat-label">TOTAL PEMASUKAN</span>
-              <span class="kuaze-delta-badge" id="income-total-delta">—</span>
-            </div>
-            <div class="kuaze-stat-val" id="income-total-val">Rp 0</div>
-            <div class="kuaze-stat-sub" id="income-total-month">—</div>
-          </div>
-
-          <div class="kuaze-stat-row">
-            <div class="kuaze-stat-mini glass-card">
-              <div class="kuaze-stat-mini-label">PEMASUKAN BERSAMA</div>
-              <div class="kuaze-stat-mini-val" id="income-shared-val">Rp 0</div>
-            </div>
-            <div class="kuaze-stat-mini glass-card">
-              <div class="kuaze-stat-mini-label" id="income-p1-label">PASANGAN 1</div>
-              <div class="kuaze-stat-mini-val" id="income-p1-val">Rp 0</div>
-            </div>
-            <div class="kuaze-stat-mini glass-card">
-              <div class="kuaze-stat-mini-label" id="income-p2-label">PASANGAN 2</div>
-              <div class="kuaze-stat-mini-val" id="income-p2-val">Rp 0</div>
-            </div>
-          </div>
-
-          <div class="kuaze-stat-card glass-card kuaze-top-cat">
-            <div class="kuaze-stat-label">KATEGORI TERBESAR</div>
-            <div class="kuaze-top-cat-name" id="income-top-category">—</div>
-          </div>
-        </div>
-
-        <!-- FORM TAMBAH PEMASUKAN -->
-        <div class="kuaze-form-section glass-card">
-          <div class="kuaze-form-title">💼 Tambah Pemasukan <span class="kuaze-form-emoji">💰</span></div>
-
-          <div class="kuaze-form-grid">
-            <div class="form-field">
-              <label>Tanggal</label>
-              <input id="income-form-date" type="date">
-            </div>
-
-            <div class="form-field">
-              <label>Kategori</label>
-              <div class="kuaze-category-select-wrap">
-                <select id="income-form-category">
-                  <!-- populated from state.incomeCategories -->
-                </select>
-                <button class="kuaze-cat-manage-btn" id="income-manage-cats" title="Kelola Kategori">⚙️</button>
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label id="income-amount-label">Jumlah (Rp)</label>
-              <div class="input-prefix-wrap">
-                <span class="input-prefix" id="income-form-currency">Rp</span>
-                <input id="income-form-amount" type="text" inputmode="numeric" placeholder="0">
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label>Pemilik</label>
-              <select id="income-form-assignee">
-                <option value="shared">🤝 Bersama</option>
-                <option id="income-form-p1" value="p1">—</option>
-                <option id="income-form-p2" value="p2">—</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Catatan (opsional)</label>
-              <input id="income-form-note" type="text" placeholder="Misal: gaji bulan ini, freelance project X…">
-            </div>
-          </div>
-
-          <button class="btn btn-primary w-full kuaze-submit-btn" id="income-form-submit">+ Tambah Pemasukan</button>
-        </div>
-
-        <!-- BREAKDOWN PER KATEGORI - DONUT -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">📊 Breakdown per Kategori</div>
-          <div class="kuaze-donut-wrap">
-            <div class="kuaze-donut-canvas-wrap">
-              <canvas id="income-donut-chart"></canvas>
-            </div>
-            <div class="kuaze-donut-legend" id="income-donut-legend"></div>
-          </div>
-        </div>
-
-        <!-- BREAKDOWN PER PEMILIK - BAR HORIZONTAL -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">👥 Breakdown per Pemilik</div>
-          <div class="kuaze-owner-bars" id="income-owner-bars"></div>
-        </div>
-
-        <!-- TREN HARIAN -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">📅 Tren Harian — <span id="income-trend-month-label">—</span></div>
-          <div class="kuaze-chart-sub">Total pemasukan per hari selama sebulan</div>
-          <canvas id="income-trend-chart" height="100"></canvas>
-        </div>
-
-        <!-- RIWAYAT PEMASUKAN -->
-        <div class="kuaze-history-section glass-card">
-          <div class="kuaze-history-title">🗂️ Riwayat Pemasukan — Bulan Ini</div>
-          <div id="income-history-list"></div>
-        </div>
-
+      <!-- ── BUDGET CATEGORY PAGES ── -->
+      <section id="page-income" class="page" aria-label="Pemasukan">
+        <div class="page-header"><div><h1 class="page-title">💼 Pemasukan</h1><p class="page-subtitle">Income</p></div><button class="btn btn-primary add-item-btn" data-category="income" id="add-income-btn">+ Anggaran</button></div>
+        <div class="category-summary-bar" id="income-summary-bar"></div>
+        <div class="budget-table-wrap glass-card" id="income-table"></div>
       </section>
-
-      <!-- ══════════════════════════════════════════
-           TAB PENGELUARAN — Gabungan Fixed + Variable (Kuaze-style)
-      ══════════════════════════════════════════ -->
-      <section id="page-expenses" class="page kuaze-page" aria-label="Pengeluaran">
-
-        <!-- MONTH NAV -->
-        <div class="kuaze-month-nav">
-          <button class="kuaze-month-btn" id="exp-prev-month">‹</button>
-          <span class="kuaze-month-label" id="exp-month-label">—</span>
-          <button class="kuaze-month-btn" id="exp-next-month">›</button>
-        </div>
-
-        <!-- SUMMARY CARDS -->
-        <div class="kuaze-summary-section">
-          <div class="kuaze-stat-card glass-card">
-            <div class="kuaze-stat-top">
-              <span class="kuaze-stat-label">TOTAL PENGELUARAN</span>
-              <span class="kuaze-delta-badge" id="exp-total-delta">—</span>
-            </div>
-            <div class="kuaze-stat-val" id="exp-total-val">Rp 0</div>
-            <div class="kuaze-stat-sub" id="exp-total-month">—</div>
-          </div>
-
-          <div class="kuaze-stat-row">
-            <div class="kuaze-stat-mini glass-card">
-              <div class="kuaze-stat-mini-label">PENGELUARAN TETAP</div>
-              <div class="kuaze-stat-mini-val" id="exp-fixed-val">Rp 0</div>
-              <div class="kuaze-stat-mini-sub" id="exp-fixed-delta">—</div>
-            </div>
-            <div class="kuaze-stat-mini glass-card">
-              <div class="kuaze-stat-mini-label">PENGELUARAN TIDAK TETAP</div>
-              <div class="kuaze-stat-mini-val" id="exp-variable-val">Rp 0</div>
-              <div class="kuaze-stat-mini-sub" id="exp-variable-delta">—</div>
-            </div>
-          </div>
-
-          <div class="kuaze-stat-card glass-card kuaze-top-cat">
-            <div class="kuaze-stat-label">KATEGORI TERBESAR</div>
-            <div class="kuaze-top-cat-name" id="exp-top-category">—</div>
-          </div>
-        </div>
-
-        <!-- NERACA BUDGET -->
-        <div class="kuaze-budget-neraca glass-card">
-          <div class="kuaze-form-title">💸 Budget Pengeluaran Bulan Ini</div>
-          <div class="kuaze-neraca-top">
-            <div class="kuaze-neraca-tabs">
-              <button class="kuaze-neraca-tab active" data-view="total">Total</button>
-              <button class="kuaze-neraca-tab" data-view="per-category">Per Kategori</button>
-            </div>
-          </div>
-          <div class="kuaze-neraca-body" id="exp-neraca-body">
-            <div class="kuaze-neraca-row">
-              <span class="kuaze-neraca-label">Total Pengeluaran</span>
-              <span class="kuaze-neraca-val" id="exp-neraca-actual">Rp 0</span>
-            </div>
-            <div class="kuaze-neraca-divider"></div>
-            <div class="kuaze-neraca-row">
-              <span class="kuaze-neraca-label">Total Anggaran</span>
-              <span class="kuaze-neraca-val" id="exp-neraca-budget">Rp 0</span>
-            </div>
-          </div>
-          <div class="kuaze-neraca-progress-wrap" id="exp-neraca-progress-wrap">
-            <div class="kuaze-neraca-progress-track">
-              <div class="kuaze-neraca-progress-fill" id="exp-neraca-fill"></div>
-            </div>
-            <div class="kuaze-neraca-sisa" id="exp-neraca-sisa">Sisa Rp 0</div>
-          </div>
-        </div>
-
-        <!-- FORM TAMBAH PENGELUARAN -->
-        <div class="kuaze-form-section glass-card">
-          <div class="kuaze-form-title">🛍️ Tambah Pengeluaran <span class="kuaze-form-emoji">🧾</span></div>
-
-          <div class="kuaze-form-grid">
-            <div class="form-field">
-              <label>Tanggal</label>
-              <input id="exp-form-date" type="date">
-            </div>
-
-            <div class="form-field">
-              <label>Kategori</label>
-              <div class="kuaze-category-select-wrap">
-                <select id="exp-form-category">
-                  <!-- populated from state.expenseCategories -->
-                </select>
-                <button class="kuaze-cat-manage-btn" id="exp-manage-cats" title="Kelola Kategori">⚙️</button>
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label id="exp-amount-label">Jumlah (Rp)</label>
-              <div class="input-prefix-wrap">
-                <span class="input-prefix" id="exp-form-currency">Rp</span>
-                <input id="exp-form-amount" type="text" inputmode="numeric" placeholder="0">
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label>Jenis</label>
-              <select id="exp-form-type">
-                <option value="variable">Tidak Tetap</option>
-                <option value="fixed">Tetap</option>
-                <option value="loan">Cicilan</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Pemilik</label>
-              <select id="exp-form-assignee">
-                <option value="shared">🤝 Bersama</option>
-                <option id="exp-form-p1" value="p1">—</option>
-                <option id="exp-form-p2" value="p2">—</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Bank / Metode</label>
-              <select id="exp-form-bank">
-                <option value="">— Pilih metode —</option>
-                <option>Bank BCA</option>
-                <option>Bank BRI</option>
-                <option>Bank Mandiri</option>
-                <option>GoPay</option>
-                <option>OVO</option>
-                <option>Dana</option>
-                <option>ShopeePay</option>
-                <option>Cash / Tunai</option>
-              </select>
-            </div>
-
-            <div class="form-field">
-              <label>Catatan (opsional)</label>
-              <input id="exp-form-note" type="text" placeholder="Misal: gaji bulan ini, makan siang kantor…">
-            </div>
-          </div>
-
-          <button class="btn btn-primary w-full kuaze-submit-btn" id="exp-form-submit">+ Tambah Pengeluaran</button>
-        </div>
-
-        <!-- BREAKDOWN PER KATEGORI - DONUT -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">📊 Breakdown per Kategori</div>
-          <div class="kuaze-donut-wrap">
-            <div class="kuaze-donut-canvas-wrap">
-              <canvas id="exp-donut-chart"></canvas>
-            </div>
-            <div class="kuaze-donut-legend" id="exp-donut-legend"></div>
-          </div>
-        </div>
-
-        <!-- BREAKDOWN PER PEMILIK - BAR HORIZONTAL -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">👥 Breakdown per Pemilik</div>
-          <div class="kuaze-owner-bars" id="exp-owner-bars"></div>
-        </div>
-
-        <!-- TREN HARIAN -->
-        <div class="kuaze-chart-section glass-card">
-          <div class="kuaze-chart-title">📅 Tren Harian — <span id="exp-trend-month-label">—</span></div>
-          <div class="kuaze-chart-sub">Total pengeluaran per hari selama sebulan</div>
-          <canvas id="exp-trend-chart" height="100"></canvas>
-        </div>
-
-        <!-- RIWAYAT PENGELUARAN -->
-        <div class="kuaze-history-section glass-card">
-          <div class="kuaze-history-title">🗂️ Riwayat Pengeluaran — Bulan Ini</div>
-          <div id="exp-history-list"></div>
-        </div>
-
+      <section id="page-fixed" class="page" aria-label="Pengeluaran Tetap">
+        <div class="page-header"><div><h1 class="page-title">🏠 Pengeluaran Tetap</h1><p class="page-subtitle">Fixed Expenses</p></div><button class="btn btn-primary add-item-btn" data-category="fixed" id="add-fixed-btn">+ Anggaran</button></div>
+        <div class="category-summary-bar" id="fixed-summary-bar"></div>
+        <div class="budget-table-wrap glass-card" id="fixed-table"></div>
       </section>
-
-      <!-- Legacy pages kept for sidebar compat -->
-      <section id="page-fixed" class="page" aria-label="Pengeluaran Tetap" style="display:none!important"></section>
-      <section id="page-variable" class="page" aria-label="Pengeluaran Variabel" style="display:none!important"></section>
-
+      <section id="page-variable" class="page" aria-label="Pengeluaran Variabel">
+        <div class="page-header"><div><h1 class="page-title">🛍️ Pengeluaran Variabel</h1><p class="page-subtitle">Variable Expenses</p></div><button class="btn btn-primary add-item-btn" data-category="variable" id="add-variable-btn">+ Anggaran</button></div>
+        <div class="category-summary-bar" id="variable-summary-bar"></div>
+        <div class="budget-table-wrap glass-card" id="variable-table"></div>
+      </section>
       <section id="page-loan" class="page" aria-label="Cicilan">
         <div class="page-header"><div><h1 class="page-title">💳 Cicilan</h1><p class="page-subtitle">Loan Repayments</p></div><button class="btn btn-primary add-item-btn" data-category="loan" id="add-loan-btn">+ Anggaran</button></div>
         <div class="category-summary-bar" id="loan-summary-bar"></div>
@@ -1266,11 +989,10 @@
       <div class="settings-section">
         <h3>🎨 Tema</h3>
         <div class="theme-buttons">
-          <button class="theme-btn" data-theme="dark">🌙 Gelap</button>
-          <button class="theme-btn" data-theme="light">☀️ Terang</button>
-          <button class="theme-btn" data-theme="rose">🌸 Lupi</button>
+          <button class="theme-btn" data-theme="dark">🖤 Drako</button>
+          <button class="theme-btn" data-theme="yuki">❄️ Yuki</button>
+          <button class="theme-btn" data-theme="rose">🩷 Pupi</button>
           <button class="theme-btn" data-theme="ocean">🌊 Ocean</button>
-          <button class="theme-btn" data-theme="sakura">🌺 Sakura</button>
         </div>
       </div>
       <div class="settings-section">
@@ -1317,24 +1039,6 @@
       <div class="form-row" style="margin-top:1.5rem">
         <button class="btn btn-ghost flex-1" id="import-cancel-btn">Batal</button>
         <button class="btn btn-primary flex-1" id="import-confirm-btn">✅ Import</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CATEGORY MANAGER MODAL -->
-<div id="cat-manager-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
-  <div class="modal glass-card animate-fadeInUp" style="max-width:460px">
-    <div class="modal-header-bar">
-      <h2 id="cat-manager-title">⚙️ Kelola Kategori</h2>
-      <button class="btn-icon" id="cat-manager-close" aria-label="Tutup">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="cat-manager-type">
-      <div id="cat-manager-list" class="cat-manager-list"></div>
-      <div class="kuaze-add-cat-row">
-        <input id="cat-manager-new-name" type="text" placeholder="Nama kategori baru…" maxlength="30">
-        <button class="btn btn-primary btn-sm" id="cat-manager-add-btn">+ Tambah</button>
       </div>
     </div>
   </div>
