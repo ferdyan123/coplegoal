@@ -589,19 +589,19 @@ function navigateTo(page) {
   if (addBudgetBtn) addBudgetBtn.style.display = budgetPages.includes(page) ? '' : 'none';
 
   const titles = {
-    home: '🏠 Panduan', dashboard: 'Dashboard', transactions: '📋 Transaksi',
-    report: '📊 Laporan Bulanan', goals: '🎯 Savings Goals',
-    split: '✂️ Split Calculator',
-    income: '💼 Pemasukan', fixed: '🏠 Pengeluaran Tetap',
-    variable: '🛍️ Pengeluaran Variabel', loan: '💳 Cicilan',
-    savings: '🐷 Tabungan', investments: '📈 Investasi',
+    home: 'Panduan', dashboard: 'Dashboard', transactions: 'Transaksi',
+    report: 'Laporan Bulanan', goals: 'Savings Goals',
+    split: 'Split Calculator',
+    income: 'Pemasukan', fixed: 'Pengeluaran Tetap',
+    variable: 'Pengeluaran Variabel', loan: 'Cicilan',
+    savings: 'Tabungan', investments: 'Investasi',
   };
   $('topbar-title').textContent = titles[page] || page;
 
-  if (window.innerWidth <= 900) {
-    $('sidebar').classList.remove('open');
-    if (sidebarOverlay) sidebarOverlay.classList.remove('show');
-  }
+  // Selalu tutup sidebar setelah navigasi (overlay-only mode)
+  $('sidebar').classList.remove('open');
+  if (sidebarOverlay) sidebarOverlay.classList.remove('show');
+
   renderPage(page);
 }
 
@@ -664,10 +664,10 @@ function calcHealthScore() {
   const finalScore = Math.round(Math.max(0, Math.min(100, score)));
 
   let grade, color;
-  if (finalScore >= 80)      { grade = '🏆 Excellent — Keuangan sangat sehat!'; color = '#34d399'; }
-  else if (finalScore >= 65) { grade = '😊 Good — Keuangan cukup sehat'; color = '#38bdf8'; }
-  else if (finalScore >= 50) { grade = '😐 Fair — Perlu beberapa perbaikan'; color = '#fbbf24'; }
-  else if (finalScore >= 30) { grade = '😟 Poor — Perhatikan pengeluaran'; color = '#fb923c'; }
+  if (finalScore >= 80)      { grade = '🏆 Excellent — Keuangan sangat sehat!'; color = getCSSVar('--accent-2') || '#34d399'; }
+  else if (finalScore >= 65) { grade = '😊 Good — Keuangan cukup sehat';        color = getCSSVar('--accent')   || '#38bdf8'; }
+  else if (finalScore >= 50) { grade = '😐 Fair — Perlu beberapa perbaikan';     color = '#fbbf24'; }
+  else if (finalScore >= 30) { grade = '😟 Poor — Perhatikan pengeluaran';        color = '#fb923c'; }
   else                        { grade = '🚨 Critical — Segera evaluasi keuangan'; color = '#f87171'; }
 
   return { score: finalScore, grade, tips: tips.slice(0, 3), color };
@@ -718,11 +718,10 @@ let donutChart = null, barChart = null;
 
 function renderDashboard() {
   const s = state.settings;
-  // Sync month picker
+
+  // ── Sync month picker ──
   const picker = $('dash-month-picker');
   if (picker && picker.value !== s.month) picker.value = s.month || '';
-  $('dash-title').textContent = `Budget ${s.name1} & ${s.name2}`;
-  $('dash-month-label').textContent = monthLabel(s.month);
 
   const incomeBudget  = calcBudget('income');
   const incomeActual  = calcActual('income');
@@ -733,6 +732,22 @@ function renderDashboard() {
   const leftBudget    = incomeBudget - expenseBudget - savBudget;
   const leftActual    = incomeActual - expenseActual - savActual;
 
+  // ── Greeting hero ──
+  const greetNames = $('dash-greeting-names');
+  const greetMonth = $('dash-greeting-month');
+  const greetSub   = $('dash-greeting-sub');
+  if (greetNames) greetNames.textContent = `${s.name1} & ${s.name2}`;
+  if (greetMonth) greetMonth.textContent = monthLabel(s.month) || '—';
+  if (greetSub) {
+    const hour = new Date().getHours();
+    const tod  = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 18 ? 'Selamat sore' : 'Selamat malam';
+    greetSub.textContent = `${tod}! Ini ringkasan keuangan kalian.`;
+  }
+  const gi = $('dash-greet-income');  if (gi) gi.textContent = fmt(incomeActual || incomeBudget);
+  const ge = $('dash-greet-expense'); if (ge) ge.textContent = fmt(expenseActual);
+  const gl = $('dash-greet-left');    if (gl) gl.textContent = fmt(leftActual);
+
+  // ── Summary cards ──
   $('dash-income-budget').textContent  = fmt(incomeBudget);
   $('dash-income-actual').textContent  = `Aktual: ${fmt(incomeActual)}`;
   $('dash-expense-budget').textContent = fmt(expenseBudget);
@@ -759,51 +774,99 @@ function renderDashboard() {
   renderFinanceSticker();
 }
 
-function getAxisColor() { return getComputedStyle(document.body).getPropertyValue('--chart-axis').trim() || '#94a3b8'; }
-function getGridColor()  { return getComputedStyle(document.body).getPropertyValue('--chart-grid').trim() || 'rgba(255,255,255,0.05)'; }
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function getAxisColor() { return getCSSVar('--chart-axis') || '#94a3b8'; }
+function getGridColor()  { return getCSSVar('--chart-grid')  || 'rgba(255,255,255,0.05)'; }
+
+/* Warna kategori dinamis dari tema aktif */
+function getThemeColors() {
+  const a  = getCSSVar('--accent');
+  const a2 = getCSSVar('--accent-2');
+  const a3 = getCSSVar('--accent-3');
+  // 6 kategori: income, fixed, variable, loan, savings, investments
+  // Pakai variasi opacity/shade dari 3 accent utama
+  return [
+    a,                                    // income    → accent utama
+    a2,                                   // fixed     → accent-2
+    a3,                                   // variable  → accent-3
+    a + 'cc',                             // loan      → accent redup
+    a2 + '99',                            // savings   → accent-2 muda
+    a3 + 'cc',                            // investments → accent-3 redup
+  ];
+}
 
 function renderDonutChart() {
   const ctx = $('donut-budget'); if (!ctx) return;
   const labels = CATEGORIES.map(c => c.label);
   const data   = CATEGORIES.map(c => calcBudget(c.key));
-  const colors = CATEGORIES.map(c => c.color);
+  const colors = getThemeColors();
   const total  = data.reduce((s, v) => s + v, 0);
   $('donut-budget-total').textContent = fmt(total);
   $('donut-legend').innerHTML = CATEGORIES.map((c, i) => `
     <div class="legend-item">
       <span class="legend-dot" style="background:${colors[i]}"></span>
-      <span>${c.icon} ${c.label}</span>
+      <span>${c.label}</span>
       <span class="legend-val">${fmt(data[i])}</span>
     </div>`).join('');
   if (donutChart) donutChart.destroy();
   if (total === 0) return;
   donutChart = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: 'transparent', hoverOffset: 6 }] },
-    options: { cutout: '68%', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)}` } } }, animation: { animateRotate: true, duration: 800 } }
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 3, borderColor: getCSSVar('--bg-surface') || 'transparent', hoverOffset: 8 }] },
+    options: {
+      cutout: '70%', responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)}` },
+          backgroundColor: getCSSVar('--bg-elevated'),
+          titleColor: getCSSVar('--text-primary'),
+          bodyColor: getCSSVar('--text-secondary'),
+          borderColor: getCSSVar('--border'),
+          borderWidth: 1,
+        }
+      },
+      animation: { animateRotate: true, duration: 900 }
+    }
   });
 }
 
 function renderBarChart() {
   const ctx = $('bar-overview'); if (!ctx) return;
-  const labels  = CATEGORIES.map(c => c.icon + ' ' + c.label.split(' ')[0]);
+  const labels  = CATEGORIES.map(c => c.label.split(' ')[0]);
   const budget  = CATEGORIES.map(c => calcBudget(c.key));
   const actual  = CATEGORIES.map(c => calcActual(c.key));
-  const colors  = CATEGORIES.map(c => c.color);
+  const accent  = getCSSVar('--accent');
+  const accent2 = getCSSVar('--accent-2');
+  const axisC   = getAxisColor();
+  const gridC   = getGridColor();
   if (barChart) barChart.destroy();
   if (budget.reduce((a,b)=>a+b,0) === 0 && actual.reduce((a,b)=>a+b,0) === 0) return;
   barChart = new Chart(ctx, {
     type: 'bar',
     data: { labels, datasets: [
-      { label: 'Budget', data: budget, backgroundColor: colors.map(c => c+'55'), borderColor: colors, borderWidth: 2, borderRadius: 6 },
-      { label: 'Aktual', data: actual, backgroundColor: colors.map(c => c+'aa'), borderColor: colors, borderWidth: 2, borderRadius: 6 },
+      { label: 'Budget', data: budget,
+        backgroundColor: accent + '33', borderColor: accent, borderWidth: 2, borderRadius: 8, borderSkipped: false },
+      { label: 'Aktual', data: actual,
+        backgroundColor: accent2 + '99', borderColor: accent2, borderWidth: 2, borderRadius: 8, borderSkipped: false },
     ]},
     options: {
       responsive: true, maintainAspectRatio: true,
-      plugins: { legend: { labels: { color: getAxisColor(), font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` } } },
+      plugins: {
+        legend: { labels: { color: axisC, font: { size: 11, family: "'Plus Jakarta Sans'" }, boxWidth: 12, borderRadius: 4 } },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}` },
+          backgroundColor: getCSSVar('--bg-elevated'),
+          titleColor: getCSSVar('--text-primary'),
+          bodyColor: getCSSVar('--text-secondary'),
+          borderColor: getCSSVar('--border'),
+          borderWidth: 1,
+        }
+      },
       scales: {
-        x: { ticks: { color: getAxisColor(), font: { size: 10 } }, grid: { color: getGridColor() } },
-        y: { ticks: { color: getAxisColor(), font: { size: 10 }, callback: v => fmt(v) }, grid: { color: getGridColor() } },
+        x: { ticks: { color: axisC, font: { size: 10 } }, grid: { color: gridC }, border: { color: 'transparent' } },
+        y: { ticks: { color: axisC, font: { size: 10 }, callback: v => fmt(v) }, grid: { color: gridC }, border: { color: 'transparent' } },
       },
     }
   });
@@ -858,7 +921,7 @@ function renderPersonBreakdown() {
       <div class="person-stat-row"><span class="person-stat-label">Budget Masuk</span><span class="person-stat-val">${fmt(incomeBudget)}</span></div>
       <div class="person-stat-row"><span class="person-stat-label">Aktual Masuk</span><span class="person-stat-val" style="color:var(--income-color)">${fmt(incomeActual)}</span></div>
       <div class="person-stat-row"><span class="person-stat-label">Budget Keluar</span><span class="person-stat-val">${fmt(expenseBudget)}</span></div>
-      <div class="person-stat-row"><span class="person-stat-label">Aktual Keluar</span><span class="person-stat-val" style="color:${expenseActual > expenseBudget && expenseBudget > 0 ? '#ef4444' : 'var(--expense-color)'}">${fmt(expenseActual)}</span></div>
+      <div class="person-stat-row"><span class="person-stat-label">Aktual Keluar</span><span class="person-stat-val" style="color:${expenseActual > expenseBudget && expenseBudget > 0 ? 'var(--accent-3, var(--danger, #ef4444))' : 'var(--expense-color)'}">${fmt(expenseActual)}</span></div>
     </div>`;
   }).join('');
 }
@@ -872,7 +935,7 @@ function renderCategoryStatusBars() {
     return `<div class="cat-bar-item">
       <div class="cat-bar-header">
         <span class="cat-bar-label">${c.icon} ${c.label}</span>
-        <span class="cat-bar-vals">${fmt(actual)} / ${fmt(budget)} <span style="color:${over ? '#ef4444' : 'var(--text-muted)'};">${over ? '▲ OVER' : ''}</span></span>
+        <span class="cat-bar-vals">${fmt(actual)} / ${fmt(budget)} <span style="color:${over ? 'var(--accent-3, var(--danger, #ef4444))' : 'var(--text-muted)'};">${over ? '▲ OVER' : ''}</span></span>
       </div>
       <div class="progress-track"><div class="progress-fill ${over ? 'over' : ''}" style="width:${Math.min(pct,100)}%;background:${c.color};"></div></div>
     </div>`;
@@ -941,7 +1004,7 @@ function renderTransactionsPage() {
   $('tx-stats-row').innerHTML = `
     <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--income-color)">+${fmt(totalIn)}</div><div class="tx-stat-label">Total Pemasukan</div></div>
     <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--expense-color)">${fmt(totalOut)}</div><div class="tx-stat-label">Total Pengeluaran</div></div>
-    <div class="tx-stat-card"><div class="tx-stat-val" style="color:${totalIn-totalOut>=0?'#10b981':'#ef4444'}">${fmt(totalIn-totalOut)}</div><div class="tx-stat-label">Net Balance</div></div>
+    <div class="tx-stat-card"><div class="tx-stat-val" style="color:${totalIn-totalOut>=0?'var(--success, var(--success, #10b981))':'var(--accent-3, var(--danger, #ef4444))'}">${fmt(totalIn-totalOut)}</div><div class="tx-stat-label">Net Balance</div></div>
     <div class="tx-stat-card"><div class="tx-stat-val">${txs.length}</div><div class="tx-stat-label">Jumlah Transaksi</div></div>`;
 
   if (!txs.length) {
@@ -1265,7 +1328,7 @@ function renderCategoryPage(cat) {
   $(`${cat}-summary-bar`).innerHTML = `
     <div class="cat-stat-card"><div class="cat-stat-label">Total Anggaran</div><div class="cat-stat-val">${fmt(totalBudget)}</div></div>
     <div class="cat-stat-card"><div class="cat-stat-label">Total Aktual</div><div class="cat-stat-val" style="color:${meta.color}">${fmt(totalActual)}</div></div>
-    <div class="cat-stat-card"><div class="cat-stat-label">Selisih</div><div class="cat-stat-val" style="color:${diff>0?'#ef4444':'#10b981'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</div></div>
+    <div class="cat-stat-card"><div class="cat-stat-label">Selisih</div><div class="cat-stat-val" style="color:${diff>0?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</div></div>
     <div class="cat-stat-card"><div class="cat-stat-label">Jumlah Item</div><div class="cat-stat-val">${items.length}</div></div>`;
 
   const tableWrap = $(`${cat}-table`);
@@ -1288,10 +1351,10 @@ function renderCategoryPage(cat) {
       <td><strong>${item.description}</strong></td>
       <td><span class="assignee-badge ${badgeCls}">${name}</span></td>
       <td>${fmt(item.budget)}</td>
-      <td><span style="color:${over?'#ef4444':'var(--income-color)'}">${fmt(actual)}</span>
+      <td><span style="color:${over?'var(--accent-3, var(--danger, #ef4444))':'var(--income-color)'}">${fmt(actual)}</span>
         <div class="progress-mini"><div class="progress-mini-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%;background:${meta.color};"></div></div>
       </td>
-      <td style="color:${over?'#ef4444':'#10b981'}">${over?'▲':'▼'} ${fmt(Math.abs(actual-item.budget))}</td>
+      <td style="color:${over?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${over?'▲':'▼'} ${fmt(Math.abs(actual-item.budget))}</td>
       <td><div class="row-actions">
         <button class="row-edit-btn" onclick="openEditBudgetItem('${cat}',${i})">✏️ Edit</button>
         <button class="row-del-btn"  onclick="deleteBudgetItem('${cat}',${i})">🗑️</button>
@@ -1304,7 +1367,7 @@ function renderCategoryPage(cat) {
     <tbody>${rows}</tbody>
     <tfoot><tr><td colspan="2"><strong>TOTAL</strong></td><td><strong>${fmt(totalBudget)}</strong></td>
       <td><strong style="color:${meta.color}">${fmt(totalActual)}</strong></td>
-      <td><strong style="color:${diff>0?'#ef4444':'#10b981'}">${diff>0?'▲':'▼'} ${fmt(Math.abs(diff))}</strong></td>
+      <td><strong style="color:${diff>0?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${diff>0?'▲':'▼'} ${fmt(Math.abs(diff))}</strong></td>
       <td></td></tr></tfoot>
   </table>`;
 }
@@ -1746,8 +1809,10 @@ function initApp() {
     dashMonthPicker.value = state.settings.month || '';
     dashMonthPicker.addEventListener('change', () => {
       state.settings.month = dashMonthPicker.value;
-      $('sidebar-month-badge').textContent = monthLabel(state.settings.month);
-      $('dash-month-label').textContent = monthLabel(state.settings.month);
+      const badge = $('sidebar-month-badge');
+      if (badge) badge.textContent = monthLabel(state.settings.month);
+      const greetMonth = $('dash-greeting-month');
+      if (greetMonth) greetMonth.textContent = monthLabel(state.settings.month) || '—';
       saveState();
       renderDashboard();
     });
