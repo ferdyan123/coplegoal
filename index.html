@@ -228,12 +228,30 @@
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Anggaran</div>
-        <button class="nav-item" data-page="income" id="nav-income">💼 Pemasukan</button>
-        <button class="nav-item" data-page="fixed" id="nav-fixed">🏠 Pengeluaran Tetap</button>
-        <button class="nav-item" data-page="variable" id="nav-variable">🛍️ Variabel</button>
-        <button class="nav-item" data-page="loan" id="nav-loan">💳 Cicilan</button>
-        <button class="nav-item" data-page="savings" id="nav-savings">🐷 Tabungan</button>
-        <button class="nav-item" data-page="investments" id="nav-investments">📈 Investasi</button>
+        <button class="nav-item" data-page="income" id="nav-income">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Pemasukan
+        </button>
+        <button class="nav-item" data-page="fixed" id="nav-fixed">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Pengeluaran Tetap
+        </button>
+        <button class="nav-item" data-page="variable" id="nav-variable">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          Variabel
+        </button>
+        <button class="nav-item" data-page="loan" id="nav-loan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Cicilan
+        </button>
+        <button class="nav-item" data-page="savings" id="nav-savings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0H5m-2 0h2M9 7h1m-1 4h1m4-4h1m-1 4h1"/></svg>
+          Tabungan
+        </button>
+        <button class="nav-item" data-page="investments" id="nav-investments">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Investasi
+        </button>
       </div>
       <div class="nav-group">
         <div class="nav-group-label">Tools</div>
@@ -567,17 +585,41 @@
 
       <!-- ── DASHBOARD ── -->
       <section id="page-dashboard" class="page active" aria-label="Dashboard">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title" id="dash-title">Dashboard</h1>
-            <p class="page-subtitle" id="dash-month-label">—</p>
+
+        <!-- GREETING HERO -->
+        <div class="dash-greeting" id="dash-greeting">
+          <div class="dash-greeting-top">
+            <div class="dash-greeting-text">
+              <div><span class="dash-greeting-wave">👋</span></div>
+              <div class="dash-greeting-title">
+                Halo, <span id="dash-greeting-names">Pasangan</span>!
+              </div>
+              <div class="dash-greeting-sub" id="dash-greeting-sub">Ini ringkasan keuangan kalian bulan ini.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0">
+              <span class="dash-greeting-month-badge" id="dash-greeting-month">—</span>
+              <div style="display:flex;gap:0.5rem">
+                <input type="month" id="dash-month-picker" class="month-picker-input" title="Pilih bulan" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff">
+                <button class="btn btn-ghost btn-sm" id="dash-export-btn" style="background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="dash-header-actions">
-            <input type="month" id="dash-month-picker" class="month-picker-input" title="Pilih bulan">
-            <button class="btn btn-ghost btn-sm" id="dash-export-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export
-          </button>
+          <div class="dash-greeting-stats">
+            <div class="dash-greeting-stat">
+              <div class="dash-greeting-stat-label">Total Pemasukan</div>
+              <div class="dash-greeting-stat-val" id="dash-greet-income">Rp 0</div>
+            </div>
+            <div class="dash-greeting-stat">
+              <div class="dash-greeting-stat-label">Total Pengeluaran</div>
+              <div class="dash-greeting-stat-val" id="dash-greet-expense">Rp 0</div>
+            </div>
+            <div class="dash-greeting-stat">
+              <div class="dash-greeting-stat-label">Sisa Anggaran</div>
+              <div class="dash-greeting-stat-val" id="dash-greet-left">Rp 0</div>
+            </div>
           </div>
         </div>
 
