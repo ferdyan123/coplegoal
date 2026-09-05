@@ -1730,6 +1730,22 @@ function getFinanceStickerConfig() {
 function renderFinanceSticker() {
   const el = $('finance-sticker-area');
   if (!el) return;
+
+  // Ocean tidak pakai stiker
+  if (state.settings.theme === 'ocean') {
+    const { title, desc } = getFinanceStickerConfig();
+    el.innerHTML = `
+      <div class="sticker-card">
+        <div class="sticker-ocean-icon">🌊</div>
+        <div class="sticker-card-text">
+          <div class="sticker-card-title">${title}</div>
+          <div class="sticker-card-desc">${desc}</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const { stickerNum, cls, title, desc } = getFinanceStickerConfig();
   el.innerHTML = `
     <div class="sticker-card">
