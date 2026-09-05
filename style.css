@@ -2452,69 +2452,71 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   line-height: 1.4;
 }
 
-/* Sprite stiker */
-.sticker {
+/* ══════════════════════════════════════════
+   STIKER INDIVIDUAL PNG (1080×1080 transparan)
+   Folder: animasi/drako/ | animasi/yuki/ | animasi/pupi/
+   File: s-happy.png, s-peek.png, s-sleep.png, dst.
+══════════════════════════════════════════ */
+
+/* Wrapper img stiker */
+.stiker-img-wrap,
+.sticker-img-wrap {
   width: 100px;
-  height: 89px;
-  background-repeat: no-repeat;
-  background-size: 554px 369px;
-  background-color: transparent;
+  height: 100px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Gambar stiker */
+.sticker-img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  object-position: center;
+  display: block;
   transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
   animation: stickerBounce 3s ease-in-out infinite;
+  /* PNG sudah transparan — tidak perlu mix-blend-mode */
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
 }
 
-/* Hapus bg putih semua tema */
-/* Yuki & Pupi (bg terang) — multiply menghilangkan putih */
-[data-theme="yuki"] .sticker,
-[data-theme="rose"] .sticker {
-  mix-blend-mode: multiply;
-}
-
-/* Drako (bg gelap) — screen mode agar putih jadi transparan di bg gelap */
-[data-theme="dark"] .sticker {
-  mix-blend-mode: screen;
-  filter: contrast(1.1) brightness(0.95);
-}
-
-.sticker:hover {
-  transform: scale(1.1) rotate(-2deg);
+.sticker-img:hover {
+  transform: scale(1.12) rotate(-3deg);
 }
 
 @keyframes stickerBounce {
   0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-6px); }
+  50%       { transform: translateY(-7px); }
 }
 
-/* ── Posisi sprite presisi — offset crop padding putih 6px kiri ── */
-/* background-size: 554x369, cell: 110x92, content: 100x89 */
-.sticker-1  { background-position: -6px   0px; }
-.sticker-2  { background-position: -116px 0px; }
-.sticker-3  { background-position: -226px 0px; }
-.sticker-4  { background-position: -336px 0px; }
-.sticker-5  { background-position: -446px 0px; }
-.sticker-6  { background-position: -6px   -92px; }
-.sticker-7  { background-position: -116px -92px; }
-.sticker-8  { background-position: -226px -92px; }
-.sticker-9  { background-position: -336px -92px; }
-.sticker-10 { background-position: -446px -92px; }
-.sticker-11 { background-position: -6px   -184px; }
-.sticker-12 { background-position: -116px -184px; }
-.sticker-13 { background-position: -226px -184px; }
-.sticker-14 { background-position: -336px -184px; }
-.sticker-15 { background-position: -446px -184px; }
-.sticker-16 { background-position: -6px   -276px; }
-.sticker-17 { background-position: -116px -276px; }
-.sticker-18 { background-position: -226px -276px; }
-.sticker-19 { background-position: -336px -276px; }
-.sticker-20 { background-position: -446px -276px; }
+/* Kondisi khusus — animasi berbeda */
+.sticker--crisis .sticker-img {
+  animation: stickerShake 0.5s ease-in-out infinite;
+}
 
-/* ── Source image per tema ── */
-[data-theme="dark"]  .sticker { background-image: url('animasi/drako.png'); }
-[data-theme="yuki"]  .sticker { background-image: url('animasi/yuki.png'); }
-[data-theme="rose"]  .sticker { background-image: url('animasi/pupi.png'); }
-/* Ocean: tidak pakai stiker */
+@keyframes stickerShake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-4px) rotate(-2deg); }
+  75%     { transform: translateX(4px) rotate(2deg); }
+}
 
+.sticker--celebrate .sticker-img {
+  animation: stickerCelebrate 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes stickerCelebrate {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-10px) scale(1.1); }
+}
+
+.sticker--idle .sticker-img {
+  animation: stickerBounce 5s ease-in-out infinite;
+}
+
+/* Ocean icon pengganti */
 .sticker-ocean-icon {
   font-size: 2.8rem;
   width: 72px;
@@ -2555,14 +2557,9 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   backdrop-filter: blur(12px);
-}
-
-.sticker-card .sticker {
-  width: 100px;
-  height: 89px;
-  flex-shrink: 0;
+  min-height: 116px;
 }
 
 .sticker-card-text {
