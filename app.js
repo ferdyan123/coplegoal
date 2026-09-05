@@ -64,8 +64,8 @@ let sbClient = null;
    CONSTANTS
 ══════════════════════════════════════════ */
 const CATEGORIES = [
-  { key: 'income',      label: 'Pemasukan',          icon: '💼', color: '#34d399' },
-  { key: 'fixed',       label: 'Pengeluaran Tetap',  icon: '🏠', color: '#f87171' },
+  { key: 'income',      label: 'Pemasukan',          icon: '💼', color: getCSSVar('--accent') || '#34d399' },
+  { key: 'fixed',       label: 'Pengeluaran Tetap',  icon: '🏠', color: getCSSVar('--accent-2') || '#f87171' },
   { key: 'variable',    label: 'Variabel',            icon: '🛍️', color: '#fbbf24' },
   { key: 'loan',        label: 'Cicilan',             icon: '💳', color: '#fb923c' },
   { key: 'savings',     label: 'Tabungan',            icon: '🐷', color: '#38bdf8' },
@@ -668,7 +668,7 @@ function calcHealthScore() {
   else if (finalScore >= 65) { grade = '😊 Good — Keuangan cukup sehat';        color = getCSSVar('--accent')   || '#38bdf8'; }
   else if (finalScore >= 50) { grade = '😐 Fair — Perlu beberapa perbaikan';     color = '#fbbf24'; }
   else if (finalScore >= 30) { grade = '😟 Poor — Perhatikan pengeluaran';        color = '#fb923c'; }
-  else                        { grade = '🚨 Critical — Segera evaluasi keuangan'; color = '#f87171'; }
+  else                        { grade = '🚨 Critical — Segera evaluasi keuangan'; color = getCSSVar('--accent-3'); }
 
   return { score: finalScore, grade, tips: tips.slice(0, 3), color };
 }
@@ -912,19 +912,25 @@ function renderProgressCircle() {
   $('stat-days-left').textContent   = ms.left;
   $('stat-days-total').textContent  = ms.total;
 
-  // SVG gradient
+  // SVG gradient — pakai warna tema
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.querySelector('.month-progress-circle svg');
-  if (svg && !svg.querySelector('#prog-gradient')) {
+  if (svg) {
+    // Hapus gradient lama supaya update saat ganti tema
+    const oldDefs = svg.querySelector('#prog-gradient');
+    if (oldDefs) oldDefs.parentElement.remove();
+
+    const accent  = getCSSVar('--accent');
+    const accent2 = getCSSVar('--accent-2');
     const defs = document.createElementNS(svgNS, 'defs');
     const grad = document.createElementNS(svgNS, 'linearGradient');
     grad.setAttribute('id', 'prog-gradient');
     grad.setAttribute('x1', '0%'); grad.setAttribute('y1', '0%');
-    grad.setAttribute('x2', '100%'); grad.setAttribute('y2', '0%');
+    grad.setAttribute('x2', '100%'); grad.setAttribute('y2', '100%');
     const s1 = document.createElementNS(svgNS, 'stop');
-    s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#7c6fff');
+    s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', accent);
     const s2 = document.createElementNS(svgNS, 'stop');
-    s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', '#ff6b8a');
+    s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', accent2);
     grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad);
     svg.insertBefore(defs, svg.firstChild);
   }
@@ -948,25 +954,27 @@ function renderPersonBreakdown() {
         <div class="person-card-name">${p.label}</div>
       </div>
       <div class="person-stat-row"><span class="person-stat-label">Budget Masuk</span><span class="person-stat-val">${fmt(incomeBudget)}</span></div>
-      <div class="person-stat-row"><span class="person-stat-label">Aktual Masuk</span><span class="person-stat-val" style="color:var(--income-color)">${fmt(incomeActual)}</span></div>
+      <div class="person-stat-row"><span class="person-stat-label">Aktual Masuk</span><span class="person-stat-val" style="color:var(--accent)">${fmt(incomeActual)}</span></div>
       <div class="person-stat-row"><span class="person-stat-label">Budget Keluar</span><span class="person-stat-val">${fmt(expenseBudget)}</span></div>
-      <div class="person-stat-row"><span class="person-stat-label">Aktual Keluar</span><span class="person-stat-val" style="color:${expenseActual > expenseBudget && expenseBudget > 0 ? 'var(--accent-3, var(--danger, #ef4444))' : 'var(--expense-color)'}">${fmt(expenseActual)}</span></div>
+      <div class="person-stat-row"><span class="person-stat-label">Aktual Keluar</span><span class="person-stat-val" style="color:${expenseActual > expenseBudget && expenseBudget > 0 ? 'var(--accent-3)' : 'var(--accent-2)'}">${fmt(expenseActual)}</span></div>
     </div>`;
   }).join('');
 }
 
 function renderCategoryStatusBars() {
-  $('category-status-bars').innerHTML = CATEGORIES.map(c => {
+  const colors = getThemeColors(); // 6 warna dari tema aktif
+  $('category-status-bars').innerHTML = CATEGORIES.map((c, i) => {
     const budget = calcBudget(c.key);
     const actual = calcActual(c.key);
     const pct    = budget > 0 ? Math.min((actual / budget) * 100, 120) : 0;
     const over   = actual > budget && budget > 0;
+    const barColor = over ? 'var(--accent-3)' : (colors[i] || 'var(--accent)');
     return `<div class="cat-bar-item">
       <div class="cat-bar-header">
         <span class="cat-bar-label">${c.icon} ${c.label}</span>
-        <span class="cat-bar-vals">${fmt(actual)} / ${fmt(budget)} <span style="color:${over ? 'var(--accent-3, var(--danger, #ef4444))' : 'var(--text-muted)'};">${over ? '▲ OVER' : ''}</span></span>
+        <span class="cat-bar-vals">${fmt(actual)} / ${fmt(budget)} <span style="color:${over ? 'var(--accent-3)' : 'var(--text-muted)'};">${over ? '▲ OVER' : ''}</span></span>
       </div>
-      <div class="progress-track"><div class="progress-fill ${over ? 'over' : ''}" style="width:${Math.min(pct,100)}%;background:${c.color};"></div></div>
+      <div class="progress-track"><div class="progress-fill ${over ? 'over' : ''}" style="width:${Math.min(pct,100)}%;background:${barColor};"></div></div>
     </div>`;
   }).join('');
 }
@@ -1031,9 +1039,9 @@ function renderTransactionsPage() {
   const totalIn  = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const totalOut = txs.filter(t => t.type !== 'income').reduce((s, t) => s + t.amount, 0);
   $('tx-stats-row').innerHTML = `
-    <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--income-color)">+${fmt(totalIn)}</div><div class="tx-stat-label">Total Pemasukan</div></div>
-    <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--expense-color)">${fmt(totalOut)}</div><div class="tx-stat-label">Total Pengeluaran</div></div>
-    <div class="tx-stat-card"><div class="tx-stat-val" style="color:${totalIn-totalOut>=0?'var(--success, var(--success, #10b981))':'var(--accent-3, var(--danger, #ef4444))'}">${fmt(totalIn-totalOut)}</div><div class="tx-stat-label">Net Balance</div></div>
+    <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--accent)">+${fmt(totalIn)}</div><div class="tx-stat-label">Total Pemasukan</div></div>
+    <div class="tx-stat-card"><div class="tx-stat-val" style="color:var(--accent-2)">${fmt(totalOut)}</div><div class="tx-stat-label">Total Pengeluaran</div></div>
+    <div class="tx-stat-card"><div class="tx-stat-val" style="color:${totalIn-totalOut>=0?'var(--accent)':'var(--accent-3)'}">${fmt(totalIn-totalOut)}</div><div class="tx-stat-label">Net Balance</div></div>
     <div class="tx-stat-card"><div class="tx-stat-val">${txs.length}</div><div class="tx-stat-label">Jumlah Transaksi</div></div>`;
 
   if (!txs.length) {
@@ -1077,8 +1085,8 @@ function renderMonthlyReport() {
     data: {
       labels,
       datasets: [
-        { label: 'Pemasukan', data: incomeData,  borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.1)', tension: 0.4, fill: true, pointRadius: 4 },
-        { label: 'Pengeluaran', data: expenseData, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', tension: 0.4, fill: true, pointRadius: 4 },
+        { label: 'Pemasukan', data: incomeData,  borderColor: getCSSVar('--accent'), backgroundColor: getCSSVar('--accent-soft'), tension: 0.4, fill: true, pointRadius: 4 },
+        { label: 'Pengeluaran', data: expenseData, borderColor: getCSSVar('--accent-2'), backgroundColor: getCSSVar('--accent-2-soft'), tension: 0.4, fill: true, pointRadius: 4 },
         { label: 'Tabungan+Inv', data: savData,  borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.08)', tension: 0.4, fill: true, pointRadius: 4 },
       ]
     },
@@ -1357,7 +1365,7 @@ function renderCategoryPage(cat) {
   $(`${cat}-summary-bar`).innerHTML = `
     <div class="cat-stat-card"><div class="cat-stat-label">Total Anggaran</div><div class="cat-stat-val">${fmt(totalBudget)}</div></div>
     <div class="cat-stat-card"><div class="cat-stat-label">Total Aktual</div><div class="cat-stat-val" style="color:${meta.color}">${fmt(totalActual)}</div></div>
-    <div class="cat-stat-card"><div class="cat-stat-label">Selisih</div><div class="cat-stat-val" style="color:${diff>0?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</div></div>
+    <div class="cat-stat-card"><div class="cat-stat-label">Selisih</div><div class="cat-stat-val" style="color:${diff>0?'var(--accent-3)':'var(--accent)'}">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))}</div></div>
     <div class="cat-stat-card"><div class="cat-stat-label">Jumlah Item</div><div class="cat-stat-val">${items.length}</div></div>`;
 
   const tableWrap = $(`${cat}-table`);
@@ -1380,10 +1388,10 @@ function renderCategoryPage(cat) {
       <td><strong>${item.description}</strong></td>
       <td><span class="assignee-badge ${badgeCls}">${name}</span></td>
       <td>${fmt(item.budget)}</td>
-      <td><span style="color:${over?'var(--accent-3, var(--danger, #ef4444))':'var(--income-color)'}">${fmt(actual)}</span>
+      <td><span style="color:${over?'var(--accent-3)':'var(--accent)'}">${fmt(actual)}</span>
         <div class="progress-mini"><div class="progress-mini-fill ${over?'over':''}" style="width:${Math.min(pct,100)}%;background:${meta.color};"></div></div>
       </td>
-      <td style="color:${over?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${over?'▲':'▼'} ${fmt(Math.abs(actual-item.budget))}</td>
+      <td style="color:${over?'var(--accent-3)':'var(--accent)'}">${over?'▲':'▼'} ${fmt(Math.abs(actual-item.budget))}</td>
       <td><div class="row-actions">
         <button class="row-edit-btn" onclick="openEditBudgetItem('${cat}',${i})">✏️ Edit</button>
         <button class="row-del-btn"  onclick="deleteBudgetItem('${cat}',${i})">🗑️</button>
@@ -1396,7 +1404,7 @@ function renderCategoryPage(cat) {
     <tbody>${rows}</tbody>
     <tfoot><tr><td colspan="2"><strong>TOTAL</strong></td><td><strong>${fmt(totalBudget)}</strong></td>
       <td><strong style="color:${meta.color}">${fmt(totalActual)}</strong></td>
-      <td><strong style="color:${diff>0?'var(--accent-3, var(--danger, #ef4444))':'var(--success, var(--success, #10b981))'}">${diff>0?'▲':'▼'} ${fmt(Math.abs(diff))}</strong></td>
+      <td><strong style="color:${diff>0?'var(--accent-3)':'var(--accent)'}">${diff>0?'▲':'▼'} ${fmt(Math.abs(diff))}</strong></td>
       <td></td></tr></tfoot>
   </table>`;
 }
@@ -1637,8 +1645,36 @@ function applyTheme(theme) {
 }
 
 /* ══════════════════════════════════════════
-   FINANCE STICKER — kondisi keuangan → stiker
+   FINANCE STICKER — kondisi keuangan → file PNG individual
+   Struktur folder:
+   animasi/drako/s-sleep.png
+   animasi/yuki/s-sleep.png
+   animasi/pupi/s-sleep.png
+   (Ocean tidak pakai stiker)
 ══════════════════════════════════════════ */
+
+/* Nama file per kondisi */
+const STICKER_FILES = {
+  nodata:    's-sleep.png',     // No. 9  — tidur, belum ada data
+  welcome:   's-peek.png',      // No. 4  — ngintip, anggaran diset
+  celebrate: 's-cheer.png',     // No. 17 — cheerleader, goal tercapai
+  happy:     's-happy.png',     // No. 3  — tertawa lebar, keuangan sehat
+  ontrack:   's-ontrack.png',   // No. 12 — senyum, on track
+  saving:    's-boba.png',      // No. 19 — pegang boba, nabung konsisten
+  warning:   's-confused.png',  // No. 14 — bingung, hampir overspend
+  crisis:    's-cry.png',       // No. 20 — nangis, over budget
+  tired:     's-tired.png',     // No. 6  — rebahan, pengeluaran tinggi
+};
+
+/* Folder per tema */
+function getStickerFolder() {
+  const t = state.settings.theme;
+  if (t === 'dark')  return 'animasi/drako';
+  if (t === 'yuki')  return 'animasi/yuki';
+  if (t === 'rose')  return 'animasi/pupi';
+  return null; // ocean = no stiker
+}
+
 function getFinanceStickerConfig() {
   const incomeBudget  = calcBudget('income');
   const incomeActual  = calcActual('income');
@@ -1649,7 +1685,7 @@ function getFinanceStickerConfig() {
     const m = state.settings.month;
     return !m || (t.date && t.date.substring(0,7) === m);
   }).length;
-  const income = incomeActual || incomeBudget;
+  const income     = incomeActual || incomeBudget;
   const leftActual = incomeActual - expenseActual - savActual;
   const surplusPct = income > 0 ? leftActual / income : 0;
   const expRatio   = income > 0 ? expenseActual / income : 0;
@@ -1658,70 +1694,70 @@ function getFinanceStickerConfig() {
 
   // 0 data sama sekali
   if (totalTx === 0 && incomeBudget === 0) return {
-    stickerNum: 9, cls: 'sticker--idle',
+    file: STICKER_FILES.nodata, cls: 'sticker--idle',
     title: 'Belum ada data nih~',
     desc: 'Yuk mulai catat keuangan kalian! 🐾'
   };
 
-  // Goal tercapai (prioritas tinggi)
+  // Goal tercapai
   if (goalDone) return {
-    stickerNum: 17, cls: 'sticker--celebrate',
+    file: STICKER_FILES.celebrate, cls: 'sticker--celebrate',
     title: 'Goal tercapai! 🎉',
     desc: 'Kalian luar biasa — target tabungan kelar!'
   };
 
   // Surplus besar > 30%
   if (surplusPct >= 0.30 && income > 0) return {
-    stickerNum: 3, cls: '',
+    file: STICKER_FILES.happy, cls: '',
     title: 'Keuangan sehat banget!',
     desc: `Sisa ${Math.round(surplusPct*100)}% dari pemasukan 🌟`
   };
 
-  // Keuangan sehat, surplus kecil 10-30%
+  // On track surplus 10-30%
   if (surplusPct >= 0.10 && income > 0) return {
-    stickerNum: 12, cls: '',
+    file: STICKER_FILES.ontrack, cls: '',
     title: 'On track, good job!',
     desc: 'Pengeluaran terkendali ✅'
   };
 
   // Nabung konsisten
   if (savActual > 0 && expRatio < 0.80) return {
-    stickerNum: 19, cls: '',
+    file: STICKER_FILES.saving, cls: '',
     title: 'Rajin nabung nih!',
     desc: 'Konsisten = kunci kebebasan finansial 🐟'
   };
 
-  // Baru login / welcome
+  // Baru login / anggaran diset tapi 0 transaksi
   if (totalTx === 0 && incomeBudget > 0) return {
-    stickerNum: 4, cls: 'sticker--idle',
+    file: STICKER_FILES.welcome, cls: 'sticker--idle',
     title: 'Siap pantau keuangan~',
     desc: 'Anggaran sudah diset, yuk catat transaksi! 👀'
   };
 
-  // Hampir overspend — expense 80-100%
+  // Hampir overspend 80-100%
   if (expRatio >= 0.80 && expRatio < 1.0) return {
-    stickerNum: 14, cls: '',
+    file: STICKER_FILES.warning, cls: '',
     title: 'Hati-hati nih...',
     desc: `Pengeluaran udah ${Math.round(expRatio*100)}% dari budget ⚠️`
   };
 
-  // Overspend / defisit
+  // Over budget
   if (expenseActual > expenseBudget && expenseBudget > 0) return {
-    stickerNum: 20, cls: 'sticker--crisis',
+    file: STICKER_FILES.crisis, cls: 'sticker--crisis',
     title: 'Aduh, over budget! 😭',
     desc: 'Pengeluaran melebihi anggaran — yuk evaluasi!'
   };
 
-  // Pengeluaran variabel tinggi
+  // Pengeluaran tinggi 70-80%
   if (expRatio >= 0.70) return {
-    stickerNum: 6, cls: '',
+    file: STICKER_FILES.tired, cls: '',
     title: 'Pengeluaran lumayan nih',
     desc: 'Kurangi sedikit biar lebih lega~'
   };
 
   // Default: aman
   return {
-    stickerNum: 3, cls: '',
+    file: STICKER_FILES.happy, cls: '',
     title: 'Keuangan aman!',
     desc: 'Terus pertahankan ya 💪'
   };
@@ -1732,7 +1768,8 @@ function renderFinanceSticker() {
   if (!el) return;
 
   // Ocean tidak pakai stiker
-  if (state.settings.theme === 'ocean') {
+  const folder = getStickerFolder();
+  if (!folder) {
     const { title, desc } = getFinanceStickerConfig();
     el.innerHTML = `
       <div class="sticker-card">
@@ -1741,21 +1778,23 @@ function renderFinanceSticker() {
           <div class="sticker-card-title">${title}</div>
           <div class="sticker-card-desc">${desc}</div>
         </div>
-      </div>
-    `;
+      </div>`;
     return;
   }
 
-  const { stickerNum, cls, title, desc } = getFinanceStickerConfig();
+  const { file, cls, title, desc } = getFinanceStickerConfig();
+  const src = `${folder}/${file}`;
   el.innerHTML = `
     <div class="sticker-card">
-      <div class="sticker sticker-${stickerNum} ${cls}"></div>
+      <div class="sticker-img-wrap ${cls}">
+        <img src="${src}" alt="${title}" class="sticker-img"
+          onerror="this.parentElement.style.display='none'">
+      </div>
       <div class="sticker-card-text">
         <div class="sticker-card-title">${title}</div>
         <div class="sticker-card-desc">${desc}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 /* ══════════════════════════════════════════
