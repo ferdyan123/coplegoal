@@ -31,8 +31,8 @@
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.35);
 
   /* Category colors */
-  --income-color:      #34d399;
-  --expense-color:     #f87171;
+  --income-color:      var(--accent);
+  --expense-color:     var(--accent-2);
   --savings-color:     #38bdf8;
   --investment-color:  #c084fc;
   --loan-color:        #fb923c;
@@ -597,7 +597,7 @@ body {
   transition: all var(--t-fast);
 }
 .sidebar-btn:hover { background: var(--glass-bg); color: var(--text-primary); }
-.sidebar-btn.danger:hover { color: #f87171; }
+.sidebar-btn.danger:hover { color: var(--accent-3); }
 
 /* ── MAIN WRAP — full width karena sidebar overlay ── */
 .main-wrap {
@@ -1073,7 +1073,8 @@ body {
   border-radius: var(--r-full);
   transition: width 0.6s ease;
 }
-.progress-fill.over { background: #f87171 !important; }
+.progress-fill.over { background: var(--accent-3) !important; }
+.progress-mini-fill.over { background: var(--accent-3) !important; }
 
 /* ══════════════════════════════════════════
    RECENT TRANSACTIONS
@@ -1146,7 +1147,7 @@ body {
   opacity: 0;
 }
 .tx-item:hover .tx-delete-btn { opacity: 1; }
-.tx-delete-btn:hover { background: rgba(248,113,113,0.15); color: #f87171; }
+.tx-delete-btn:hover { background: var(--accent-3-soft); color: var(--accent-3); }
 
 /* ══════════════════════════════════════════
    TRANSACTIONS PAGE
@@ -1617,7 +1618,7 @@ input[type="range"]::-webkit-slider-thumb {
   border-radius: var(--r-full);
   transition: width 0.5s ease;
 }
-.progress-mini-fill.over { background: #f87171 !important; }
+
 
 .row-actions { display: flex; gap: 0.25rem; }
 
@@ -1633,7 +1634,7 @@ input[type="range"]::-webkit-slider-thumb {
   transition: all var(--t-fast);
 }
 .row-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
-.row-del-btn:hover { border-color: #f87171; color: #f87171; }
+.row-del-btn:hover { border-color: var(--accent-3); color: var(--accent-3); }
 
 /* ══════════════════════════════════════════
    FORMS & INPUTS
@@ -1783,7 +1784,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   color: var(--text-secondary);
 }
 .btn-ghost:hover { background: var(--input-bg); color: var(--text-primary); }
-.btn-ghost.danger:hover { color: #f87171; border-color: rgba(248,113,113,0.3); }
+.btn-ghost.danger:hover { color: var(--accent-3); border-color: rgba(248,113,113,0.3); }
 
 .btn-icon {
   width: 36px; height: 36px;
@@ -1935,7 +1936,7 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   max-width: 320px;
 }
 .toast.success { background: var(--accent-2-soft); border: 1px solid var(--accent-2-soft); color: var(--income-color); }
-.toast.error   { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.3); color: var(--expense-color); }
+.toast.error   { background: var(--accent-3-soft); border: 1px solid rgba(248,113,113,0.3); color: var(--expense-color); }
 .toast.info    { background: var(--accent-soft); border: 1px solid var(--accent-soft); color: var(--accent); }
 
 /* ══════════════════════════════════════════
