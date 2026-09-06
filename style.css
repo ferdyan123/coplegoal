@@ -2786,3 +2786,410 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+
+/* ══════════════════════════════════════════
+   TOPBAR — NEW NAV SYSTEM
+   Logo + scrollable tabs (mask kiri) + actions
+══════════════════════════════════════════ */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Logo — klik = Dashboard, jadi mask kiri */
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px 0 16px;
+  height: 100%;
+  background: var(--bg-surface);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+  text-decoration: none;
+  /* Gradient fade ke kanan — efek mask untuk tab yang scroll ke kiri */
+  -webkit-mask: linear-gradient(to right, #000 80%, transparent 100%);
+  mask: linear-gradient(to right, #000 80%, transparent 100%);
+  padding-right: 24px;
+}
+
+.topbar-logo-icon {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  transition: transform var(--t-base);
+}
+
+.topbar-logo:hover .topbar-logo-icon { transform: scale(1.08); }
+
+.topbar-logo-text {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+/* Nav scroll wrap — mengisi sisa ruang */
+.topbar-nav-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  /* fade kiri — tab yang scroll ke kiri akan "ditelan" logo */
+  -webkit-mask: linear-gradient(to right, transparent 0%, #000 24px, #000 85%, transparent 100%);
+  mask: linear-gradient(to right, transparent 0%, #000 24px, #000 85%, transparent 100%);
+}
+
+/* Scroll nav */
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+}
+.topbar-nav::-webkit-scrollbar { display: none; }
+
+/* Tab item */
+.topbar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+  flex-shrink: 0;
+  height: 30px;
+  position: relative;
+}
+
+.topbar-tab:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.topbar-tab.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.topbar-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+.topbar-tab-chevron {
+  transition: transform var(--t-fast);
+  opacity: 0.6;
+}
+
+.topbar-tab[aria-expanded="true"] .topbar-tab-chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Anggaran */
+.topbar-tab-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 6px;
+  min-width: 200px;
+  box-shadow: var(--shadow-lg);
+  z-index: 300;
+  display: none;
+  animation: dropdownIn 0.15s ease;
+}
+
+.topbar-dropdown.open { display: block; }
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.topbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--t-fast);
+}
+
+.topbar-dropdown-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.topbar-dropdown-item svg { flex-shrink: 0; color: var(--text-muted); }
+.topbar-dropdown-item:hover svg { color: var(--accent); }
+
+/* Topbar actions kanan */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 8px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  position: relative;
+  z-index: 5;
+  height: 100%;
+  /* Fade kiri agar actions tidak kelihatan abrupt */
+  -webkit-mask: linear-gradient(to right, transparent 0, #000 16px);
+  mask: linear-gradient(to right, transparent 0, #000 16px);
+}
+
+.topbar-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 480px) {
+  .topbar-add-label { display: none; }
+  .topbar-add-btn { padding: 0 8px; }
+}
+
+/* ══════════════════════════════════════════
+   BOTTOM NAV — mobile only (≤768px)
+══════════════════════════════════════════ */
+.bottom-nav {
+  display: none; /* hidden di desktop */
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 58px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  z-index: 150;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (max-width: 768px) {
+  .bottom-nav { display: flex; align-items: stretch; }
+  .main-content { padding-bottom: 70px; }
+  /* Sembunyikan sidebar lama di mobile */
+  .sidebar { display: none !important; }
+  /* Sembunyikan topbar nav di mobile — pakai bottom nav */
+  .topbar-nav-wrap { display: none; }
+  .topbar-logo { -webkit-mask: none; mask: none; padding-right: 14px; }
+}
+
+.bottom-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--t-fast);
+  position: relative;
+  padding: 6px 4px;
+}
+
+.bottom-tab.active {
+  color: var(--accent);
+}
+
+.bottom-tab.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 3px 3px;
+}
+
+.bottom-tab svg { transition: transform var(--t-fast); }
+.bottom-tab.active svg { transform: scale(1.1); }
+.bottom-tab span { font-size: 0.58rem; }
+
+/* Tombol + tengah */
+.bottom-tab-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-tab-plus {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  bottom: 8px;
+  box-shadow: 0 4px 14px var(--accent-soft), 0 0 0 4px var(--bg-surface);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.bottom-tab-plus:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px var(--accent-soft), 0 0 0 4px var(--bg-surface);
+}
+
+/* ══════════════════════════════════════════
+   BOTTOM SHEET — Anggaran & Lainnya
+══════════════════════════════════════════ */
+.bottom-sheet-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  z-index: 160;
+}
+
+.bottom-sheet-overlay.show { display: block; }
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-surface);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 10px 20px 32px;
+  z-index: 161;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.34,1.1,0.64,1);
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: var(--r-full);
+  margin: 0 auto 14px;
+}
+
+.bottom-sheet-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.bottom-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.bottom-sheet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 8px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  text-align: center;
+}
+
+.bottom-sheet-item:hover,
+.bottom-sheet-item:active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.bottom-sheet-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
