@@ -588,6 +588,30 @@ function navigateTo(page) {
   const addBudgetBtn = $('add-budget-btn');
   if (addBudgetBtn) addBudgetBtn.style.display = budgetPages.includes(page) ? '' : 'none';
 
+  // Sync topbar tabs aktif
+  const ANGGARAN_PAGES = ['income','fixed','variable','loan','savings','investments'];
+  $$('.topbar-tab[data-page]').forEach(t => {
+    t.classList.toggle('active', t.dataset.page === page);
+  });
+  // Anggaran tab aktif jika salah satu sub-page aktif
+  const anggaranTab = $('tnav-anggaran');
+  if (anggaranTab) anggaranTab.classList.toggle('active', ANGGARAN_PAGES.includes(page));
+
+  // Tutup dropdown anggaran
+  const drop = $('anggaran-dropdown');
+  if (drop) {
+    drop.classList.remove('open');
+    if (anggaranTab) anggaranTab.setAttribute('aria-expanded', 'false');
+  }
+
+  // Sync bottom tabs aktif
+  $$('.bottom-tab[data-page]').forEach(t => {
+    t.classList.toggle('active', t.dataset.page === page);
+  });
+  // Anggaran bottom tab aktif jika sub-page anggaran
+  const bAnggaranTab = $('bnav-anggaran-trigger');
+  if (bAnggaranTab) bAnggaranTab.classList.toggle('active', ANGGARAN_PAGES.includes(page));
+
   const titles = {
     home: 'Panduan', dashboard: 'Dashboard', transactions: 'Transaksi',
     report: 'Laporan Bulanan', goals: 'Savings Goals',
@@ -596,7 +620,8 @@ function navigateTo(page) {
     variable: 'Pengeluaran Variabel', loan: 'Cicilan',
     savings: 'Tabungan', investments: 'Investasi',
   };
-  $('topbar-title').textContent = titles[page] || page;
+  const titleEl = $('topbar-title');
+  if (titleEl) titleEl.textContent = titles[page] || page;
 
   // Selalu tutup sidebar setelah navigasi (overlay-only mode)
   $('sidebar').classList.remove('open');
@@ -1910,14 +1935,106 @@ function initApp() {
     });
   }
 
-  // Nav
+  // ── Topbar tabs ──
+  $$('.topbar-tab[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+  });
+
+  // ── Dropdown Anggaran (topbar) ──
+  const anggaranBtn  = $('tnav-anggaran');
+  const anggaranDrop = $('anggaran-dropdown');
+  if (anggaranBtn && anggaranDrop) {
+    anggaranBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isOpen = anggaranDrop.classList.contains('open');
+      anggaranDrop.classList.toggle('open', !isOpen);
+      anggaranBtn.setAttribute('aria-expanded', String(!isOpen));
+    });
+    anggaranDrop.querySelectorAll('.topbar-dropdown-item[data-page]').forEach(item => {
+      item.addEventListener('click', () => {
+        navigateTo(item.dataset.page);
+        anggaranDrop.classList.remove('open');
+        anggaranBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+
+  // Tutup dropdown saat klik di luar
+  document.addEventListener('click', e => {
+    if (anggaranDrop && !$('anggaran-dropdown-wrap').contains(e.target)) {
+      anggaranDrop.classList.remove('open');
+      if (anggaranBtn) anggaranBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // ── Bottom nav ──
+  $$('.bottom-tab[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+  });
+
+  // Bottom tab + = buka modal transaksi
+  $('bnav-add')?.addEventListener('click', () => openAddTransaction());
+
+  // Helper buka/tutup bottom sheet
+  function openSheet(sheetId, overlayId) {
+    $(sheetId).classList.add('open');
+    $(overlayId).classList.add('show');
+  }
+  function closeSheet(sheetId, overlayId) {
+    $(sheetId).classList.remove('open');
+    $(overlayId).classList.remove('show');
+  }
+
+  // Bottom tab Anggaran → buka bottom sheet
+  $('bnav-anggaran-trigger')?.addEventListener('click', () => openSheet('anggaran-sheet', 'anggaran-sheet-overlay'));
+  $('anggaran-sheet-overlay')?.addEventListener('click', () => closeSheet('anggaran-sheet', 'anggaran-sheet-overlay'));
+
+  // Bottom sheet Anggaran items
+  $$('#anggaran-sheet .bottom-sheet-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => {
+      navigateTo(item.dataset.page);
+      closeSheet('anggaran-sheet', 'anggaran-sheet-overlay');
+    });
+  });
+
+  // Bottom tab Lainnya → buka bottom sheet
+  $('bnav-more')?.addEventListener('click', () => openSheet('more-sheet', 'more-sheet-overlay'));
+  $('more-sheet-overlay')?.addEventListener('click', () => closeSheet('more-sheet', 'more-sheet-overlay'));
+
+  // Bottom sheet Lainnya items
+  $$('#more-sheet .bottom-sheet-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => {
+      navigateTo(item.dataset.page);
+      closeSheet('more-sheet', 'more-sheet-overlay');
+    });
+  });
+
+  $('bsheet-settings')?.addEventListener('click', () => {
+    openSettings();
+    closeSheet('more-sheet', 'more-sheet-overlay');
+  });
+
+  $('bsheet-theme')?.addEventListener('click', () => {
+    toggleTheme();
+    const label = $('bsheet-theme-label');
+    const icons = { dark:'🖤 Drako', yuki:'❄️ Yuki', rose:'🩷 Pupi', ocean:'🌊 Ocean' };
+    if (label) label.textContent = icons[state.settings.theme] || 'Tema';
+  });
+
+  // ── Legacy nav-item di sidebar (kalau masih ada) ──
   $$('.nav-item').forEach(btn => btn.addEventListener('click', () => navigateTo(btn.dataset.page)));
 
-  // Mobile menu
-  $('menu-toggle').addEventListener('click', () => {
-    $('sidebar').classList.toggle('open');
-    sidebarOverlay.classList.toggle('show');
-  });
+  // Mobile menu toggle (sidebar legacy)
+  const menuToggle = $('menu-toggle');
+  if (menuToggle) {
+    menuToggle.addEventListener('click', () => {
+      const sidebar = $('sidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('open');
+        if (sidebarOverlay) sidebarOverlay.classList.toggle('show');
+      }
+    });
+  }
 
   // Topbar & sidebar actions
   $('see-all-tx').addEventListener('click',      () => navigateTo('transactions'));
